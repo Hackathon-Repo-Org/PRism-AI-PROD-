@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prism-ai/schemas/context.schema.json",
+  "title": "PRism-AI context.json",
+  "description": "Shared run context produced by orchestrator.context. Schema version 1.0.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "runId",
+    "snapshotId",
+    "baseCommit",
+    "baseRef",
+    "candidateRef",
+    "intent",
+    "scopePath",
+    "snapshotDir",
+    "diffPath",
+    "project",
+    "changedFiles",
+    "relevantSource",
+    "relevantTests",
+    "relevantDocs",
+    "exclusions",
+    "scopeLimitations",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^run-\\d{8}-\\d{6}-[0-9a-f]{7}$"
+    },
+    "snapshotId": {
+      "type": "string",
+      "description": "Full SHA of the candidate commit.",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "baseCommit": {
+      "type": "string",
+      "description": "Full SHA of the base commit.",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "baseRef": {
+      "type": "string"
+    },
+    "candidateRef": {
+      "type": "string"
+    },
+    "intent": {
+      "type": "string"
+    },
+    "scopePath": {
+      "type": "string"
+    },
+    "snapshotDir": {
+      "type": "string"
+    },
+    "diffPath": {
+      "type": "string"
+    },
+    "project": {
+      "type": "object",
+      "required": ["language", "framework", "testCommand", "testWorkingDirectory"],
+      "additionalProperties": false,
+      "properties": {
+        "language":             { "type": "string" },
+        "framework":            { "type": "string" },
+        "testCommand":          { "type": "string" },
+        "testWorkingDirectory": { "type": "string" }
+      }
+    },
+    "changedFiles": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/changedFile" }
+    },
+    "relevantSource": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "relevantTests": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "relevantDocs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "exclusions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/exclusion" }
+    },
+    "scopeLimitations": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "changedFile": {
+      "type": "object",
+      "required": ["path", "status", "additions", "deletions", "hunks"],
+      "additionalProperties": false,
+      "properties": {
+        "path":      { "type": "string" },
+        "status":    { "type": "string", "enum": ["A", "M", "D", "R"] },
+        "additions": { "type": "integer", "minimum": 0 },
+        "deletions": { "type": "integer", "minimum": 0 },
+        "hunks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["oldStart", "oldLines", "newStart", "newLines"],
+            "additionalProperties": false,
+            "properties": {
+              "oldStart": { "type": "integer" },
+              "oldLines": { "type": "integer" },
+              "newStart": { "type": "integer" },
+              "newLines": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+    "exclusion": {
+      "type": "object",
+      "required": ["path", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "path":   { "type": "string" },
+        "reason": {
+          "type": "string",
+          "enum": ["generated", "secret", "outside-scope", "too-large", "binary"]
+        }
+      }
+    }
+  }
+}

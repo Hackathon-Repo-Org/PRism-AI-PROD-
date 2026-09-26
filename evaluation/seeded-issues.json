@@ -1,0 +1,74 @@
+[
+  {
+    "id": "SEED-01",
+    "agent": "code-review",
+    "acceptedCategories": ["NULL_HANDLING", "ERROR_HANDLING"],
+    "file": "sample-project/app/service.py",
+    "symbols": ["create_ticket"],
+    "subjectHints": ["priority"],
+    "expected": "A finding that identifies priority.upper() being called before any null/missing check, causing AttributeError (HTTP 500) when priority is absent or null.",
+    "reproduction": "curl -s -X POST http://localhost:8000/tickets -H 'Content-Type: application/json' -d '{\"title\": \"Test\"}' — returns HTTP 500 instead of 400.",
+    "presentIn": ["demo-bad"],
+    "fixedIn": "demo-fixed"
+  },
+  {
+    "id": "SEED-02",
+    "agent": "code-review",
+    "acceptedCategories": ["INPUT_VALIDATION", "LOGIC_ERROR"],
+    "file": "sample-project/app/service.py",
+    "symbols": ["create_ticket"],
+    "subjectHints": ["priority"],
+    "expected": "A finding that identifies no allowed-value check after uppercasing, so arbitrary strings like 'URGENT' are accepted and stored.",
+    "reproduction": "curl -s -X POST http://localhost:8000/tickets -H 'Content-Type: application/json' -d '{\"title\": \"Test\", \"priority\": \"URGENT\"}' — returns 201 and stores 'URGENT'.",
+    "presentIn": ["demo-bad"],
+    "fixedIn": "demo-fixed"
+  },
+  {
+    "id": "SEED-03",
+    "agent": "testing",
+    "acceptedCategories": ["MISSING_TEST"],
+    "file": "sample-project/app/service.py",
+    "symbols": ["create_ticket"],
+    "subjectHints": ["null", "missing", "none"],
+    "expected": "A finding that no test asserts the missing/null-priority behaviour (expected: 400 invalid_priority; actual: 500 AttributeError).",
+    "reproduction": "No test exists that calls POST /tickets without a priority field and asserts status 400 with error 'invalid_priority'.",
+    "presentIn": ["demo-bad"],
+    "fixedIn": "demo-fixed"
+  },
+  {
+    "id": "SEED-04",
+    "agent": "testing",
+    "acceptedCategories": ["MISSING_TEST"],
+    "file": "sample-project/app/service.py",
+    "symbols": ["create_ticket"],
+    "subjectHints": ["unsupported", "invalid", "unknown"],
+    "expected": "A finding that no test asserts the unsupported-priority behaviour (expected: 400 invalid_priority; actual: 201 accepted).",
+    "reproduction": "No test exists that calls POST /tickets with priority='URGENT' and asserts status 400 with error 'invalid_priority'.",
+    "presentIn": ["demo-bad"],
+    "fixedIn": "demo-fixed"
+  },
+  {
+    "id": "SEED-05",
+    "agent": "documentation",
+    "acceptedCategories": ["DOC_MISSING", "DOC_MISMATCH", "DOC_EXAMPLE_INVALID"],
+    "file": "sample-project/docs/api.md",
+    "symbols": [],
+    "subjectHints": ["priority"],
+    "expected": "A finding that docs/api.md does not mention the priority field on POST /tickets (request or response) and does not document the invalid_priority error code.",
+    "reproduction": "Search docs/api.md for 'priority' — no match. The field and its error are completely absent from the API contract.",
+    "presentIn": ["demo-bad"],
+    "fixedIn": "demo-fixed"
+  },
+  {
+    "id": "SEED-06",
+    "agent": "code-review",
+    "acceptedCategories": ["LOGIC_ERROR", "INPUT_VALIDATION"],
+    "file": "sample-project/app/service.py",
+    "symbols": ["create_ticket"],
+    "subjectHints": ["title", "max_title_length"],
+    "expected": "A finding that the title length check uses >= instead of >, rejecting titles of exactly 100 characters which the API contract allows.",
+    "reproduction": "curl -s -X POST http://localhost:8000/tickets -H 'Content-Type: application/json' -d '{\"title\": \"'$(python3 -c \"print('a'*100)\"'\"}' — returns 400 instead of 201.",
+    "presentIn": ["heldout-variation"],
+    "fixedIn": null
+  }
+]

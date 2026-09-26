@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-20260926-101500-a1b2c3d",
+  "snapshotId": "aabbccdd11223344556677889900aabbccdd1122",
+  "agent": "testing",
+  "status": "completed",
+  "statusReason": null,
+  "startedAt": "2026-09-26T10:15:05.000Z",
+  "finishedAt": "2026-09-26T10:15:35.000Z",
+  "durationMs": 30000,
+  "findings": [
+    {
+      "id": "TEST-001",
+      "key": "MISSING_TEST|sample-project/app/service.py|create_item|null_priority",
+      "severity": "MEDIUM",
+      "category": "MISSING_TEST",
+      "title": "No test covers null priority input to create_item",
+      "file": "sample-project/app/service.py",
+      "line": null,
+      "symbol": "create_item",
+      "description": "The create_item function was changed to accept a priority field but there is no test asserting behaviour when priority is None or absent.",
+      "evidence": "grep for 'priority' in sample-project/tests/ returns no test function.",
+      "evidenceType": "source-analysis",
+      "recommendation": "Add a test that POSTs to the create endpoint without a priority field and asserts the response is valid.",
+      "relatedFiles": ["sample-project/tests/test_tickets.py"]
+    }
+  ],
+  "limitations": [
+    "Only the baseline test suite was executed; no new tests were generated."
+  ],
+  "execution": {
+    "command": "python -m pytest -q --junitxml=../../logs/junit.xml",
+    "workingDirectory": "runs/run-20260926-101500-a1b2c3d/snapshot/sample-project",
+    "exitCode": 0,
+    "logPath": "runs/run-20260926-101500-a1b2c3d/logs/pytest.log",
+    "junitPath": "runs/run-20260926-101500-a1b2c3d/logs/junit.xml",
+    "collected": 18,
+    "passed": 18,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "startedAt": "2026-09-26T10:15:07.000Z",
+    "finishedAt": "2026-09-26T10:15:32.000Z",
+    "durationMs": 25000
+  }
+}

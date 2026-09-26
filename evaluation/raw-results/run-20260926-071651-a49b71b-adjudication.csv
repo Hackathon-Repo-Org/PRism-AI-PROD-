@@ -1,0 +1,3 @@
+runId,rowType,findingId,findingKey,agent,category,severity,title,compatibleSeeds,verdict
+run-20260926-071651-a49b71b,UNMATCHED,TEST-001,MISSING_TEST|sample-project/app/service.py|list_tickets|empty_q,testing,MISSING_TEST,LOW,No test asserts that an empty-string ?q= is ignored,,
+run-20260926-071651-a49b71b,UNMATCHED,TEST-002,MISSING_TEST|sample-project/app/service.py|list_tickets|padded_q_trimmed,testing,MISSING_TEST,LOW,No test asserts that a non-blank q with surrounding whitespace is trimmed before matching,,

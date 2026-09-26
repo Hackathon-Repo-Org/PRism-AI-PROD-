@@ -1,0 +1,7 @@
+{
+  "scopePath": "sample-project",
+  "testCommand": "python -m pytest -q",
+  "testWorkingDirectory": "sample-project",
+  "language": "Python",
+  "framework": "FastAPI"
+}

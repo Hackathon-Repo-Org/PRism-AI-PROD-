@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "DOC-001",
+      "key": "DOC_MISSING|sample-project/docs/api.md|-|priority",
+      "severity": "MEDIUM",
+      "category": "DOC_MISSING",
+      "title": "priority field missing from POST /tickets request schema and error codes",
+      "file": "sample-project/docs/api.md",
+      "line": 41,
+      "symbol": null,
+      "description": "The diff adds a required 'priority' field to POST /tickets (accepted values LOW, MEDIUM, HIGH; case-insensitive; stored as upper case) and a new error code 'invalid_priority'. Neither the request field table nor the error codes table in docs/api.md was updated. A caller following the documentation would not know to send priority and would receive a 500 (or 400) without explanation.",
+      "evidence": "Code: priority = priority.upper()  (sample-project/app/service.py:47)  |  Doc: no mention of 'priority' in POST /tickets section (docs/api.md lines 36-62)",
+      "evidenceType": "doc-comparison",
+      "recommendation": "Add 'priority' to the POST /tickets request body table (required, string, one of LOW/MEDIUM/HIGH, case-insensitive). Add a row to the error codes table: 400 | invalid_priority | priority is missing, null, or not one of LOW, MEDIUM, HIGH. Update the response example to include the priority field. Update the curl example to pass priority.",
+      "relatedFiles": ["sample-project/app/service.py"]
+    }
+  ],
+  "limitations": [
+    "OpenAPI schema does not expose manually raised ValidationError codes (invalid_priority); source file was read directly to identify missing error documentation."
+  ]
+}

@@ -1,0 +1,21 @@
+--- a/bob_sessions/phase0_experiments/test_toy.py
++++ b/bob_sessions/phase0_experiments/test_toy.py
+@@ -17,0 +18,16 @@
++
++# --- Tests generated for untested branches (Experiment 4) ---
++
++def test_classify_zero():
++    assert classify(0) == "zero"
++
++
++def test_classify_positive():
++    assert classify(7) == "positive"
++
++
++def test_safe_divide_happy_path():
++    assert safe_divide(10.0, 4.0) == 2.5
++
++
++def test_safe_divide_zero_divisor():
++    with pytest.raises(ValueError, match="Cannot divide by zero"):
++        safe_divide(5.0, 0)

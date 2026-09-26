@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-20260926-101500-a1b2c3d",
+  "snapshotId": "aabbccdd11223344556677889900aabbccdd1122",
+  "agent": "documentation",
+  "status": "completed",
+  "statusReason": null,
+  "startedAt": "2026-09-26T10:15:04.000Z",
+  "finishedAt": "2026-09-26T10:15:55.000Z",
+  "durationMs": 51000,
+  "findings": [
+    {
+      "id": "DOC-001",
+      "key": "DOC_MISSING|sample-project/docs/api.md|-|priority_field",
+      "severity": "MEDIUM",
+      "category": "DOC_MISSING",
+      "title": "priority field is not documented in api.md",
+      "file": "sample-project/docs/api.md",
+      "line": 34,
+      "symbol": null,
+      "description": "The create endpoint now accepts a priority field but api.md does not mention it. Callers have no way to know valid values or default behaviour.",
+      "evidence": "api.md POST /items section lists only: title, description. No mention of priority.",
+      "evidenceType": "doc-comparison",
+      "recommendation": "Add a priority field entry to the POST /items request body table in api.md, including accepted values and the default.",
+      "relatedFiles": ["sample-project/app/service.py"]
+    }
+  ],
+  "limitations": [
+    "Only files listed in context.json relevantDocs were reviewed."
+  ],
+  "execution": null
+}

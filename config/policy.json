@@ -1,0 +1,11 @@
+{
+  "policyVersion": "1.0",
+  "requiredAgents": ["code-review", "testing", "documentation"],
+  "blockingMinSeverity": {
+    "default": "HIGH",
+    "MISSING_TEST": "MEDIUM",
+    "DOC_MISMATCH": "MEDIUM",
+    "DOC_MISSING": "MEDIUM",
+    "TEST_FAILURE": "INFO"
+  }
+}

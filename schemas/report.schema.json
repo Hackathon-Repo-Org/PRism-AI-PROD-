@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prism-ai/schemas/report.schema.json",
+  "title": "PRism-AI report.json",
+  "description": "Aggregated readiness report produced by orchestrator.aggregate. Schema version 1.0.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "runId",
+    "snapshotId",
+    "baseCommit",
+    "baseRef",
+    "candidateRef",
+    "generatedAt",
+    "policyVersion",
+    "readiness",
+    "agents",
+    "execution",
+    "findings",
+    "counts",
+    "timeline",
+    "limitations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^run-\\d{8}-\\d{6}-[0-9a-f]{7}$"
+    },
+    "snapshotId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "baseCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "baseRef":      { "type": "string" },
+    "candidateRef": { "type": "string" },
+    "generatedAt":  { "type": "string", "format": "date-time" },
+    "policyVersion":{ "type": "string" },
+    "readiness": {
+      "type": "object",
+      "required": ["state", "reasons"],
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "READY_FOR_HUMAN_REVIEW",
+            "ATTENTION_REQUIRED",
+            "VERIFICATION_FAILED"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "detail"],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "AGENT_MISSING",
+                  "AGENT_ERROR",
+                  "AGENT_TIMEOUT",
+                  "AGENT_SKIPPED",
+                  "SCHEMA_INVALID",
+                  "SNAPSHOT_MISMATCH",
+                  "TESTS_NOT_RUN",
+                  "TESTS_FAILED",
+                  "BLOCKING_FINDINGS"
+                ]
+              },
+              "detail": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "agents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["agent", "status", "startedAt", "finishedAt", "durationMs"],
+        "additionalProperties": false,
+        "properties": {
+          "agent":      { "type": "string", "enum": ["code-review", "testing", "documentation"] },
+          "status":     { "type": "string", "enum": ["completed", "error", "timeout", "skipped"] },
+          "startedAt":  { "type": "string", "format": "date-time" },
+          "finishedAt": { "type": "string", "format": "date-time" },
+          "durationMs": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "execution": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/testingExecution" }
+      ]
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/reportFinding" }
+    },
+    "counts": {
+      "type": "object",
+      "required": ["total", "blocking", "byAgent"],
+      "additionalProperties": false,
+      "properties": {
+        "total":    { "type": "integer", "minimum": 0 },
+        "blocking": { "type": "integer", "minimum": 0 },
+        "byAgent": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "timeline": {
+      "type": "object",
+      "required": ["wallClockMs", "sumOfAgentMs", "overlapObserved"],
+      "additionalProperties": false,
+      "properties": {
+        "wallClockMs":     { "type": "integer", "minimum": 0 },
+        "sumOfAgentMs":    { "type": "integer", "minimum": 0 },
+        "overlapObserved": { "type": "boolean" }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "reportFinding": {
+      "type": "object",
+      "required": [
+        "id",
+        "key",
+        "severity",
+        "category",
+        "title",
+        "file",
+        "line",
+        "symbol",
+        "description",
+        "evidence",
+        "evidenceType",
+        "recommendation",
+        "relatedFiles",
+        "agents",
+        "blocking"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(CODE|TEST|DOC)-\\d{3}$"
+        },
+        "key":      { "type": "string" },
+        "severity": {
+          "type": "string",
+          "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "NULL_HANDLING",
+            "INPUT_VALIDATION",
+            "LOGIC_ERROR",
+            "ERROR_HANDLING",
+            "REGRESSION",
+            "SECURITY",
+            "MAINTAINABILITY",
+            "MISSING_TEST",
+            "WEAK_TEST",
+            "TEST_FAILURE",
+            "DOC_MISMATCH",
+            "DOC_MISSING",
+            "DOC_EXAMPLE_INVALID"
+          ]
+        },
+        "title":          { "type": "string" },
+        "file":           { "type": "string" },
+        "line":           { "type": ["integer", "null"], "minimum": 1 },
+        "symbol":         { "type": ["string", "null"] },
+        "description":    { "type": "string" },
+        "evidence":       { "type": "string" },
+        "evidenceType": {
+          "type": "string",
+          "enum": ["source-analysis", "tool-output", "test-execution", "doc-comparison"]
+        },
+        "recommendation": { "type": "string" },
+        "relatedFiles":   { "type": "array", "items": { "type": "string" } },
+        "agents":         { "type": "array", "items": { "type": "string", "enum": ["code-review", "testing", "documentation"] } },
+        "blocking":       { "type": "boolean" }
+      }
+    },
+    "testingExecution": {
+      "type": "object",
+      "required": [
+        "command",
+        "workingDirectory",
+        "exitCode",
+        "logPath",
+        "junitPath",
+        "collected",
+        "passed",
+        "failed",
+        "skipped",
+        "errors",
+        "startedAt",
+        "finishedAt",
+        "durationMs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "command":          { "type": "string" },
+        "workingDirectory": { "type": "string" },
+        "exitCode":         { "type": ["integer", "null"] },
+        "logPath":          { "type": "string" },
+        "junitPath":        { "type": "string" },
+        "collected":        { "type": ["integer", "null"], "minimum": 0 },
+        "passed":           { "type": ["integer", "null"], "minimum": 0 },
+        "failed":           { "type": ["integer", "null"], "minimum": 0 },
+        "skipped":          { "type": ["integer", "null"], "minimum": 0 },
+        "errors":           { "type": ["integer", "null"], "minimum": 0 },
+        "startedAt":        { "type": "string", "format": "date-time" },
+        "finishedAt":       { "type": "string", "format": "date-time" },
+        "durationMs":       { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

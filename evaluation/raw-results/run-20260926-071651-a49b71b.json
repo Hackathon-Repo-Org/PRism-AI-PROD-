@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-20260926-071651-a49b71b",
+  "ref": "control-clean-change",
+  "scoredAt": "2026-09-26T07:20:05.298Z",
+  "seedsPresent": 0,
+  "seedsMatched": 0,
+  "overallRecall": null,
+  "recallPerAgent": {},
+  "seedHits": {},
+  "ambiguousSeeds": [],
+  "ambiguousFindings": [],
+  "latencyMs": 86804,
+  "agentStatuses": {
+    "code-review": "completed",
+    "testing": "completed",
+    "documentation": "completed"
+  },
+  "readinessState": "READY_FOR_HUMAN_REVIEW",
+  "totalFindings": 2,
+  "unmatchedFindingCount": 2
+}

@@ -1,0 +1,209 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-20260926-071649-85e2b7e",
+  "snapshotId": "85e2b7e80e5943f0a740ae24c0b4a46bd78c0d9e",
+  "baseCommit": "76aedbfa2efaf2a5b56a14c25ecb6b33ae758bbe",
+  "baseRef": "baseline-clean",
+  "candidateRef": "demo-fixed",
+  "generatedAt": "2026-09-26T07:19:23.000Z",
+  "policyVersion": "1.0",
+  "readiness": {
+    "state": "ATTENTION_REQUIRED",
+    "reasons": [
+      {
+        "code": "BLOCKING_FINDINGS",
+        "detail": "TEST-001, TEST-002"
+      }
+    ]
+  },
+  "agents": [
+    {
+      "agent": "code-review",
+      "status": "completed",
+      "startedAt": "2026-09-26T07:17:42.192Z",
+      "finishedAt": "2026-09-26T07:18:22.136Z",
+      "durationMs": 39944
+    },
+    {
+      "agent": "testing",
+      "status": "completed",
+      "startedAt": "2026-09-26T07:17:45.926Z",
+      "finishedAt": "2026-09-26T07:19:10.920Z",
+      "durationMs": 84994
+    },
+    {
+      "agent": "documentation",
+      "status": "completed",
+      "startedAt": "2026-09-26T07:17:46.039Z",
+      "finishedAt": "2026-09-26T07:18:31.034Z",
+      "durationMs": 44995
+    }
+  ],
+  "execution": {
+    "command": "python -m pytest -q --junitxml=../../logs/junit.xml",
+    "workingDirectory": "runs/run-20260926-071649-85e2b7e/snapshot/sample-project",
+    "exitCode": 0,
+    "logPath": "runs/run-20260926-071649-85e2b7e/logs/pytest.log",
+    "junitPath": "runs/run-20260926-071649-85e2b7e/logs/junit.xml",
+    "collected": 26,
+    "passed": 26,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "startedAt": "2026-09-26T07:17:46.486Z",
+    "finishedAt": "2026-09-26T07:17:54.151Z",
+    "durationMs": 7665
+  },
+  "findings": [
+    {
+      "id": "DOC-001",
+      "key": "DOC_EXAMPLE_INVALID|sample-project/README.md|-|priority",
+      "severity": "MEDIUM",
+      "category": "DOC_EXAMPLE_INVALID",
+      "title": "README create-ticket curl example omits the now-required priority field",
+      "file": "sample-project/README.md",
+      "line": 80,
+      "symbol": null,
+      "description": "The README smoke-test example creates a ticket with only a title. priority is now required on POST /tickets, so this example returns 400 invalid_priority instead of creating a ticket. The later steps in the same smoke test (get ticket 1, update status) then fail with 404.",
+      "evidence": "Code: sample-project/app/service.py:46-47 `if priority is None:` / `raise ValidationError(\"invalid_priority\", \"priority is required\")`  |  Doc: sample-project/README.md:80 `-d '{\"title\": \"Fix login bug\"}' | python -m json.tool`",
+      "evidenceType": "doc-comparison",
+      "recommendation": "Add a priority to the README example body, e.g. `-d '{\"title\": \"Fix login bug\", \"priority\": \"HIGH\"}'`.",
+      "relatedFiles": [
+        "sample-project/app/service.py",
+        "sample-project/app/models.py"
+      ],
+      "agents": [
+        "documentation"
+      ],
+      "blocking": false
+    },
+    {
+      "id": "TEST-001",
+      "key": "MISSING_TEST|sample-project/app/service.py|TicketService.create_ticket|whitespace_priority",
+      "severity": "MEDIUM",
+      "category": "MISSING_TEST",
+      "title": "No test asserts that surrounding whitespace in priority is trimmed",
+      "file": "sample-project/app/service.py",
+      "line": 48,
+      "symbol": "TicketService.create_ticket",
+      "description": "The diff normalises priority with `priority.strip().upper()`, so a value such as \" high \" should be accepted and stored as \"HIGH\". Existing tests only cover case normalisation (\"high\", \"medium\") and never send a whitespace-padded priority, so the trimming half of the normalisation is unasserted.",
+      "evidence": "service.py:48 (added in diff): `normalised = priority.strip().upper()`; tests only post \"high\" (test_create_with_priority_is_normalised) and \"medium\" (test_create_lowercase_priority_is_normalised).",
+      "evidenceType": "source-analysis",
+      "recommendation": "Add `test_create_priority_is_trimmed` in sample-project/tests/test_tickets.py: `resp = client.post(\"/tickets\", json={\"title\": \"T\", \"priority\": \"  high  \"})`; assert `resp.status_code == 201` and `resp.json()[\"priority\"] == \"HIGH\"`.",
+      "relatedFiles": [
+        "sample-project/tests/test_tickets.py"
+      ],
+      "agents": [
+        "testing"
+      ],
+      "blocking": true
+    },
+    {
+      "id": "TEST-002",
+      "key": "MISSING_TEST|sample-project/app/models.py|TicketResponse|priority_in_retrieved_ticket",
+      "severity": "MEDIUM",
+      "category": "MISSING_TEST",
+      "title": "No test asserts priority is returned when a ticket is retrieved or listed",
+      "file": "sample-project/app/models.py",
+      "line": 25,
+      "symbol": "TicketResponse",
+      "description": "The diff adds a required `priority: str` field to `TicketResponse`, which is the response model for GET /tickets, GET /tickets/{id} and PATCH /tickets/{id}/status, and stores `\"priority\": normalised` on the ticket. No test checks that the stored priority round-trips through retrieval endpoints; test_get_existing and test_list_returns_all assert only `title`.",
+      "evidence": "models.py:25 (added): `priority: str`; service.py:61 (added): `\"priority\": normalised,`; test_get_existing asserts only `resp.json()[\"title\"] == \"Retrieve me\"`.",
+      "evidenceType": "source-analysis",
+      "recommendation": "Add `test_get_returns_priority` in sample-project/tests/test_tickets.py: create with `client.post(\"/tickets\", json={\"title\": \"T\", \"priority\": \"low\"})`, then `resp = client.get(\"/tickets/1\")`; assert `resp.status_code == 200` and `resp.json()[\"priority\"] == \"LOW\"`. Optionally assert the same field in `client.get(\"/tickets\").json()[0][\"priority\"]`.",
+      "relatedFiles": [
+        "sample-project/tests/test_tickets.py"
+      ],
+      "agents": [
+        "testing"
+      ],
+      "blocking": true
+    },
+    {
+      "id": "DOC-002",
+      "key": "DOC_MISSING|sample-project/README.md|-|priority",
+      "severity": "LOW",
+      "category": "DOC_MISSING",
+      "title": "README ticket overview does not mention the new priority field",
+      "file": "sample-project/README.md",
+      "line": 9,
+      "symbol": null,
+      "description": "The README's 'What it is' section lists the ticket attributes (title, description, status, creation timestamp) but not priority, which is now a required input and is returned on every ticket.",
+      "evidence": "Code: sample-project/app/models.py:25 `priority: str`  |  Doc: sample-project/README.md:9-10 `Tickets have a title, an optional description, a status (`OPEN` \u2192 `IN_PROGRESS` \u2192 `CLOSED`), and a creation timestamp.`",
+      "evidenceType": "doc-comparison",
+      "recommendation": "Add priority (`LOW`, `MEDIUM`, `HIGH`, required) to the ticket overview sentence in the README.",
+      "relatedFiles": [
+        "sample-project/app/models.py",
+        "sample-project/app/service.py"
+      ],
+      "agents": [
+        "documentation"
+      ],
+      "blocking": false
+    },
+    {
+      "id": "DOC-003",
+      "key": "DOC_MISSING|sample-project/docs/api.md|-|priority_validation_rules",
+      "severity": "LOW",
+      "category": "DOC_MISSING",
+      "title": "Validation rules summary table has no priority rules",
+      "file": "sample-project/docs/api.md",
+      "line": 210,
+      "symbol": null,
+      "description": "The 'Validation rules summary' section lists title and status rules but omits the new priority rules (required, allowed values LOW/MEDIUM/HIGH, case-insensitive with surrounding whitespace trimmed, normalised to upper case). The rules are described in the POST /tickets table, so the summary is incomplete rather than contradictory.",
+      "evidence": "Code: sample-project/app/service.py:48-49 `normalised = priority.strip().upper()` / `if normalised not in ALLOWED_PRIORITIES:`  |  Doc: sample-project/docs/api.md:210 `| Status allowed values | `OPEN`, `IN_PROGRESS`, `CLOSED` \u2014 exact case, no other values accepted |` (last row; no priority row)",
+      "evidenceType": "doc-comparison",
+      "recommendation": "Add 'Priority required' and 'Priority allowed values' rows: `LOW`, `MEDIUM`, `HIGH`, case-insensitive, whitespace trimmed, stored upper case.",
+      "relatedFiles": [
+        "sample-project/app/service.py"
+      ],
+      "agents": [
+        "documentation"
+      ],
+      "blocking": false
+    },
+    {
+      "id": "TEST-003",
+      "key": "MISSING_TEST|sample-project/app/service.py|TicketService.create_ticket|empty_priority",
+      "severity": "LOW",
+      "category": "MISSING_TEST",
+      "title": "No test for empty or whitespace-only priority",
+      "file": "sample-project/app/service.py",
+      "line": 49,
+      "symbol": "TicketService.create_ticket",
+      "description": "An empty string or whitespace-only priority passes the `is None` check and is rejected only because `\"\"` is not in ALLOWED_PRIORITIES after `.strip().upper()`. This edge case (implied by the documented 'missing/null/unsupported -> 400' contract) is not asserted by any test.",
+      "evidence": "service.py:46-53: `if priority is None: ...` then `normalised = priority.strip().upper()` / `if normalised not in ALLOWED_PRIORITIES: raise ValidationError(\"invalid_priority\", ...)`; no test posts `\"priority\": \"\"` or `\"priority\": \"   \"`.",
+      "evidenceType": "source-analysis",
+      "recommendation": "Add `test_create_empty_priority_rejected` in sample-project/tests/test_tickets.py: `resp = client.post(\"/tickets\", json={\"title\": \"T\", \"priority\": \"\"})` (and a variant with `\"   \"`); assert `resp.status_code == 400` and `resp.json()[\"error\"] == \"invalid_priority\"`.",
+      "relatedFiles": [
+        "sample-project/tests/test_tickets.py"
+      ],
+      "agents": [
+        "testing"
+      ],
+      "blocking": false
+    }
+  ],
+  "counts": {
+    "total": 6,
+    "blocking": 2,
+    "byAgent": {
+      "documentation": 3,
+      "testing": 3
+    }
+  },
+  "timeline": {
+    "wallClockMs": 88728,
+    "sumOfAgentMs": 169933,
+    "overlapObserved": true
+  },
+  "limitations": [
+    "Analysis is static source review of the snapshot only; no code was executed.",
+    "Non-string JSON values for priority (e.g. an integer) are handled by Pydantic model coercion/validation before reaching service.create_ticket; the resulting status (400 vs 422) depends on the installed Pydantic version, which was not in the allowed input set.",
+    "Making priority required on POST /tickets is a deliberate, documented contract change (docs/api.md marks it required); clients that previously sent title-only bodies now receive 400 invalid_priority. Not reported as a defect because it matches the updated contract.",
+    "All existing tests passed, but passing tests do not prove that changed behaviours are asserted. See behaviour-map.md for gaps.",
+    "No coverage tool was run. Line coverage figures are not reported.",
+    "Analysis is limited to files listed in context.json. Files outside the scope path were not examined.",
+    "Only files under sample-project/ were analysed."
+  ]
+}

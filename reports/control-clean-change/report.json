@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-20260926-071651-a49b71b",
+  "snapshotId": "a49b71ba6c241bafe4a4b7c189194ac55b546930",
+  "baseCommit": "76aedbfa2efaf2a5b56a14c25ecb6b33ae758bbe",
+  "baseRef": "baseline-clean",
+  "candidateRef": "control-clean-change",
+  "generatedAt": "2026-09-26T07:19:11.000Z",
+  "policyVersion": "1.0",
+  "readiness": {
+    "state": "READY_FOR_HUMAN_REVIEW",
+    "reasons": []
+  },
+  "agents": [
+    {
+      "agent": "code-review",
+      "status": "completed",
+      "startedAt": "2026-09-26T07:17:44.212Z",
+      "finishedAt": "2026-09-26T07:18:13.942Z",
+      "durationMs": 29730
+    },
+    {
+      "agent": "testing",
+      "status": "completed",
+      "startedAt": "2026-09-26T07:17:44.196Z",
+      "finishedAt": "2026-09-26T07:19:01.024Z",
+      "durationMs": 76828
+    },
+    {
+      "agent": "documentation",
+      "status": "completed",
+      "startedAt": "2026-09-26T07:17:46.177Z",
+      "finishedAt": "2026-09-26T07:18:24.920Z",
+      "durationMs": 38743
+    }
+  ],
+  "execution": {
+    "command": "python -m pytest -q --junitxml=../../logs/junit.xml",
+    "workingDirectory": "runs/run-20260926-071651-a49b71b/snapshot/sample-project",
+    "exitCode": 0,
+    "logPath": "runs/run-20260926-071651-a49b71b/logs/pytest.log",
+    "junitPath": "runs/run-20260926-071651-a49b71b/logs/junit.xml",
+    "collected": 26,
+    "passed": 26,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "startedAt": "2026-09-26T07:17:52.201Z",
+    "finishedAt": "2026-09-26T07:17:59.105Z",
+    "durationMs": 6903
+  },
+  "findings": [
+    {
+      "id": "TEST-001",
+      "key": "MISSING_TEST|sample-project/app/service.py|list_tickets|empty_q",
+      "severity": "LOW",
+      "category": "MISSING_TEST",
+      "title": "No test asserts that an empty-string ?q= is ignored",
+      "file": "sample-project/app/service.py",
+      "line": 61,
+      "symbol": "list_tickets",
+      "description": "The diff documents and implements that an empty q is treated as no filter, but no test sends an empty q value. The only related test (test_list_q_filter_blank_ignored) sends a whitespace-only value. The same code branch is exercised, so this is a nice-to-have scenario for the documented contract rather than an untested branch.",
+      "evidence": "service.py: `# q may be any non-empty string; empty string is treated as no filter` / `effective_q = q.strip() if q is not None else None` / `if effective_q == \"\": effective_q = None`. docs/api.md: `empty or whitespace-only string is ignored`. tests/test_tickets.py only has `resp = client.get(\"/tickets?q=   \")` for this path.",
+      "evidenceType": "source-analysis",
+      "recommendation": "Add `test_list_q_filter_empty_ignored` in tests/test_tickets.py: create two tickets via `client.post(\"/tickets\", json={\"title\": \"A\"})` and `{\"title\": \"B\"}`, call `resp = client.get(\"/tickets?q=\")`, and assert `resp.status_code == 200` and that the response body contains both tickets (`len(resp.json()) == 2`).",
+      "relatedFiles": [
+        "sample-project/tests/test_tickets.py"
+      ],
+      "agents": [
+        "testing"
+      ],
+      "blocking": false
+    },
+    {
+      "id": "TEST-002",
+      "key": "MISSING_TEST|sample-project/app/service.py|list_tickets|padded_q_trimmed",
+      "severity": "LOW",
+      "category": "MISSING_TEST",
+      "title": "No test asserts that a non-blank q with surrounding whitespace is trimmed before matching",
+      "file": "sample-project/app/service.py",
+      "line": 61,
+      "symbol": "list_tickets",
+      "description": "list_tickets strips q before passing it to the store, so a value like '  login  ' should match titles containing 'login'. No test asserts this trimming for a non-blank value; existing q tests only use unpadded values or a whitespace-only value.",
+      "evidence": "service.py: `effective_q = q.strip() if q is not None else None` followed by `return store.list_all(status, effective_q)`. tests/test_tickets.py q calls: `?q=login`, `?q=payment`, `?q=   `, `?status=OPEN&q=fix` \u2014 none with padded non-blank text.",
+      "evidenceType": "source-analysis",
+      "recommendation": "Add `test_list_q_filter_trimmed` in tests/test_tickets.py: create `{\"title\": \"Fix login bug\"}` and `{\"title\": \"Add dark mode\"}`, call `resp = client.get(\"/tickets\", params={\"q\": \"  login  \"})`, and assert `resp.status_code == 200` and `[t[\"title\"] for t in resp.json()] == [\"Fix login bug\"]`.",
+      "relatedFiles": [
+        "sample-project/tests/test_tickets.py"
+      ],
+      "agents": [
+        "testing"
+      ],
+      "blocking": false
+    }
+  ],
+  "counts": {
+    "total": 2,
+    "blocking": 0,
+    "byAgent": {
+      "testing": 2
+    }
+  },
+  "timeline": {
+    "wallClockMs": 76828,
+    "sumOfAgentMs": 145301,
+    "overlapObserved": true
+  },
+  "limitations": [
+    "Analysis was static source review only; the test suite was not executed.",
+    "sample-project/README.md (listed under relevantDocs) was not read because it is neither a changed file nor in relevantSource.",
+    "All existing tests passed, but passing tests do not prove that changed behaviours are asserted. See behaviour-map.md for gaps.",
+    "No coverage tool was run. Line coverage figures are not reported.",
+    "Analysis is limited to files listed in context.json. Files outside the scope path were not examined.",
+    "Only files under sample-project/ were analysed."
+  ]
+}

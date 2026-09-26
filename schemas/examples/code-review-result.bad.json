@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-20260926-101500-a1b2c3d",
+  "snapshotId": "aabbccdd11223344556677889900aabbccdd1122",
+  "agent": "code-review",
+  "status": "completed",
+  "statusReason": null,
+  "startedAt": "2026-09-26T10:15:03.000Z",
+  "finishedAt": "2026-09-26T10:15:41.000Z",
+  "durationMs": 38000,
+  "findings": [
+    {
+      "id": "CODE-001",
+      "key": "NULL_HANDLING|sample-project/app/service.py|create_item|priority",
+      "severity": "HIGH",
+      "category": "NULL_HANDLING",
+      "title": "Missing value is dereferenced before null check",
+      "file": "sample-project/app/service.py",
+      "line": 42,
+      "symbol": "create_item",
+      "description": "The priority field is accessed without first checking whether it is None. When a caller omits the field the expression raises an AttributeError.",
+      "evidence": "priority_value = data.priority.lower()  # data.priority may be None",
+      "evidenceType": "source-analysis",
+      "recommendation": "Add an explicit null guard before dereferencing: `if data.priority is not None`.",
+      "relatedFiles": []
+    },
+    {
+      "id": "CODE-002",
+      "key": "INPUT_VALIDATION|sample-project/app/service.py|create_item|status",
+      "severity": "MEDIUM",
+      "category": "INPUT_VALIDATION",
+      "title": "Status field is not validated against allowed values",
+      "file": "sample-project/app/service.py",
+      "line": 55,
+      "symbol": "create_item",
+      "description": "The status field is stored without checking that it is one of the permitted enum values, allowing arbitrary strings to reach the data store.",
+      "evidence": "item['status'] = data.status  # no enum check",
+      "evidenceType": "source-analysis",
+      "recommendation": "Validate against an explicit allowlist before storing, or use a Pydantic enum field in the request model.",
+      "relatedFiles": ["sample-project/app/models.py"]
+    }
+  ],
+  "limitations": [
+    "Did not analyse third-party library code."
+  ],
+  "execution": null
+}

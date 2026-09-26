@@ -1,0 +1,17 @@
+﻿runs/
+.venv/
+venv/
+env/
+__pycache__/
+.pytest_cache/
+*.log
+*.pyc
+*.pyo
+*.pyd
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# PRism-AI AI settings (contains an API key)
+.prism.env

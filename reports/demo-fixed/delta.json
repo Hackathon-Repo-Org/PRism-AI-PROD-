@@ -1,0 +1,208 @@
+{
+  "schemaVersion": "1.0",
+  "previousRunId": "run-20260926-071648-db642d6",
+  "runId": "run-20260926-071649-85e2b7e",
+  "previousSnapshotId": "db642d6de5a38f57859d852bd359bb4d8ae830e0",
+  "snapshotId": "85e2b7e80e5943f0a740ae24c0b4a46bd78c0d9e",
+  "previousState": "ATTENTION_REQUIRED",
+  "state": "ATTENTION_REQUIRED",
+  "resolved": [
+    {
+      "id": "CODE-001",
+      "key": "NULL_HANDLING|sample-project/app/service.py|create_ticket|priority",
+      "agent": "code-review",
+      "severity": "HIGH",
+      "blocking": true,
+      "title": "priority.upper() called on None when priority is omitted, causing HTTP 500",
+      "file": "sample-project/app/service.py",
+      "line": 45
+    },
+    {
+      "id": "CODE-002",
+      "key": "INPUT_VALIDATION|sample-project/app/service.py|create_ticket|priority",
+      "agent": "code-review",
+      "severity": "HIGH",
+      "blocking": true,
+      "title": "priority is never checked against ALLOWED_PRIORITIES, so any string is accepted",
+      "file": "sample-project/app/service.py",
+      "line": 45
+    },
+    {
+      "id": "DOC-001",
+      "key": "DOC_MISSING|sample-project/docs/api.md|CreateTicketRequest|priority",
+      "agent": "documentation",
+      "severity": "MEDIUM",
+      "blocking": true,
+      "title": "POST /tickets request table does not document the new `priority` field",
+      "file": "sample-project/docs/api.md",
+      "line": 41
+    },
+    {
+      "id": "DOC-002",
+      "key": "DOC_MISSING|sample-project/docs/api.md|TicketResponse|priority",
+      "agent": "documentation",
+      "severity": "MEDIUM",
+      "blocking": true,
+      "title": "Ticket data model does not document the new `priority` response field",
+      "file": "sample-project/docs/api.md",
+      "line": 17
+    },
+    {
+      "id": "DOC-003",
+      "key": "DOC_MISSING|sample-project/docs/api.md|-|priority_validation_rule",
+      "agent": "documentation",
+      "severity": "MEDIUM",
+      "blocking": true,
+      "title": "Validation rules summary and error table have no priority rule",
+      "file": "sample-project/docs/api.md",
+      "line": 203
+    },
+    {
+      "id": "DOC-004",
+      "key": "DOC_EXAMPLE_INVALID|sample-project/docs/api.md|create_ticket|post_tickets_curl_example",
+      "agent": "documentation",
+      "severity": "MEDIUM",
+      "blocking": false,
+      "title": "POST /tickets curl example omits `priority` and would fail against current code",
+      "file": "sample-project/docs/api.md",
+      "line": 66
+    },
+    {
+      "id": "TEST-001",
+      "key": "MISSING_TEST|sample-project/app/service.py|create_ticket|missing_priority",
+      "agent": "testing",
+      "severity": "MEDIUM",
+      "blocking": true,
+      "title": "No test for creating a ticket without a priority",
+      "file": "sample-project/app/service.py",
+      "line": 45
+    },
+    {
+      "id": "TEST-002",
+      "key": "MISSING_TEST|sample-project/app/service.py|create_ticket|null_priority",
+      "agent": "testing",
+      "severity": "MEDIUM",
+      "blocking": true,
+      "title": "No test for creating a ticket with an explicit null priority",
+      "file": "sample-project/app/service.py",
+      "line": 45
+    },
+    {
+      "id": "TEST-003",
+      "key": "MISSING_TEST|sample-project/app/service.py|create_ticket|unsupported_priority",
+      "agent": "testing",
+      "severity": "MEDIUM",
+      "blocking": true,
+      "title": "No test that an unsupported priority value is rejected",
+      "file": "sample-project/app/service.py",
+      "line": 15
+    },
+    {
+      "id": "DOC-006",
+      "key": "DOC_EXAMPLE_INVALID|sample-project/docs/api.md|TicketResponse|response_example_priority",
+      "agent": "documentation",
+      "severity": "LOW",
+      "blocking": false,
+      "title": "Ticket JSON response examples do not include the `priority` field",
+      "file": "sample-project/docs/api.md",
+      "line": 50
+    },
+    {
+      "id": "TEST-005",
+      "key": "MISSING_TEST|sample-project/app/service.py|create_ticket|each_allowed_priority",
+      "agent": "testing",
+      "severity": "LOW",
+      "blocking": false,
+      "title": "Allowed priority values LOW and MEDIUM are never asserted in responses",
+      "file": "sample-project/app/service.py",
+      "line": 53
+    },
+    {
+      "id": "TEST-006",
+      "key": "MISSING_TEST|sample-project/app/main.py|get_ticket|priority_in_read_responses",
+      "agent": "testing",
+      "severity": "LOW",
+      "blocking": false,
+      "title": "GET endpoints never assert the new priority field",
+      "file": "sample-project/app/main.py",
+      "line": 42
+    }
+  ],
+  "persistent": [
+    {
+      "id": "DOC-001",
+      "key": "DOC_EXAMPLE_INVALID|sample-project/README.md|-|priority",
+      "agent": "documentation",
+      "severity": "MEDIUM",
+      "blocking": false,
+      "title": "README create-ticket curl example omits the now-required priority field",
+      "file": "sample-project/README.md",
+      "line": 80,
+      "previousId": "DOC-005",
+      "previousLine": 80
+    },
+    {
+      "id": "DOC-002",
+      "key": "DOC_MISSING|sample-project/README.md|-|priority",
+      "agent": "documentation",
+      "severity": "LOW",
+      "blocking": false,
+      "title": "README ticket overview does not mention the new priority field",
+      "file": "sample-project/README.md",
+      "line": 9,
+      "previousId": "DOC-007",
+      "previousLine": 9
+    },
+    {
+      "id": "TEST-003",
+      "key": "MISSING_TEST|sample-project/app/service.py|TicketService.create_ticket|empty_priority",
+      "agent": "testing",
+      "severity": "LOW",
+      "blocking": false,
+      "title": "No test for empty or whitespace-only priority",
+      "file": "sample-project/app/service.py",
+      "line": 49,
+      "previousId": "TEST-004",
+      "previousLine": 45
+    }
+  ],
+  "new": [
+    {
+      "id": "TEST-001",
+      "key": "MISSING_TEST|sample-project/app/service.py|TicketService.create_ticket|whitespace_priority",
+      "agent": "testing",
+      "severity": "MEDIUM",
+      "blocking": true,
+      "title": "No test asserts that surrounding whitespace in priority is trimmed",
+      "file": "sample-project/app/service.py",
+      "line": 48
+    },
+    {
+      "id": "TEST-002",
+      "key": "MISSING_TEST|sample-project/app/models.py|TicketResponse|priority_in_retrieved_ticket",
+      "agent": "testing",
+      "severity": "MEDIUM",
+      "blocking": true,
+      "title": "No test asserts priority is returned when a ticket is retrieved or listed",
+      "file": "sample-project/app/models.py",
+      "line": 25
+    },
+    {
+      "id": "DOC-003",
+      "key": "DOC_MISSING|sample-project/docs/api.md|-|priority_validation_rules",
+      "agent": "documentation",
+      "severity": "LOW",
+      "blocking": false,
+      "title": "Validation rules summary table has no priority rules",
+      "file": "sample-project/docs/api.md",
+      "line": 210
+    }
+  ],
+  "unverified": [],
+  "counts": {
+    "resolved": 12,
+    "persistent": 3,
+    "new": 3,
+    "unverified": 0
+  }
+}

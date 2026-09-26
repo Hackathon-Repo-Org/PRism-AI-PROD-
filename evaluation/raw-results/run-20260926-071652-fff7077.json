@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-20260926-071652-fff7077",
+  "ref": "heldout-variation",
+  "scoredAt": "2026-09-26T07:20:06.218Z",
+  "seedsPresent": 1,
+  "seedsMatched": 1,
+  "overallRecall": 1.0,
+  "recallPerAgent": {
+    "code-review": {
+      "matched": 1,
+      "total": 1,
+      "recall": 1.0
+    }
+  },
+  "seedHits": {
+    "SEED-06": "CODE-001"
+  },
+  "ambiguousSeeds": [],
+  "ambiguousFindings": [],
+  "latencyMs": 110376,
+  "agentStatuses": {
+    "code-review": "completed",
+    "testing": "completed",
+    "documentation": "completed"
+  },
+  "readinessState": "ATTENTION_REQUIRED",
+  "totalFindings": 7,
+  "unmatchedFindingCount": 6
+}

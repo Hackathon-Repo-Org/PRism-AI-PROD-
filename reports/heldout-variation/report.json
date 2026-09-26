@@ -1,0 +1,231 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-20260926-071652-fff7077",
+  "snapshotId": "fff70778f6093d623d19291db7c5d402215b4155",
+  "baseCommit": "76aedbfa2efaf2a5b56a14c25ecb6b33ae758bbe",
+  "baseRef": "baseline-clean",
+  "candidateRef": "heldout-variation",
+  "generatedAt": "2026-09-26T07:19:35.000Z",
+  "policyVersion": "1.0",
+  "readiness": {
+    "state": "ATTENTION_REQUIRED",
+    "reasons": [
+      {
+        "code": "BLOCKING_FINDINGS",
+        "detail": "CODE-001, DOC-001, TEST-001, TEST-002"
+      }
+    ]
+  },
+  "agents": [
+    {
+      "agent": "code-review",
+      "status": "completed",
+      "startedAt": "2026-09-26T07:17:45.968Z",
+      "finishedAt": "2026-09-26T07:18:21.416Z",
+      "durationMs": 35448
+    },
+    {
+      "agent": "testing",
+      "status": "completed",
+      "startedAt": "2026-09-26T07:17:46.221Z",
+      "finishedAt": "2026-09-26T07:19:15.539Z",
+      "durationMs": 89318
+    },
+    {
+      "agent": "documentation",
+      "status": "completed",
+      "startedAt": "2026-09-26T07:17:44.624Z",
+      "finishedAt": "2026-09-26T07:18:22.908Z",
+      "durationMs": 38284
+    }
+  ],
+  "execution": {
+    "command": "python -m pytest -q --junitxml=../../logs/junit.xml",
+    "workingDirectory": "runs/run-20260926-071652-fff7077/snapshot/sample-project",
+    "exitCode": 0,
+    "logPath": "runs/run-20260926-071652-fff7077/logs/pytest.log",
+    "junitPath": "runs/run-20260926-071652-fff7077/logs/junit.xml",
+    "collected": 20,
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "startedAt": "2026-09-26T07:17:46.894Z",
+    "finishedAt": "2026-09-26T07:17:54.094Z",
+    "durationMs": 7199
+  },
+  "findings": [
+    {
+      "id": "CODE-001",
+      "key": "LOGIC_ERROR|sample-project/app/service.py|create_ticket|max_title_length",
+      "severity": "HIGH",
+      "category": "LOGIC_ERROR",
+      "title": "Off-by-one: titles of exactly MAX_TITLE_LENGTH (100) characters are now rejected",
+      "file": "sample-project/app/service.py",
+      "line": 38,
+      "symbol": "create_ticket",
+      "description": "The intent is a refactor of title length validation, which should not change behaviour, but the comparison was changed from `>` to `>=`. With MAX_TITLE_LENGTH = 100, the concrete input POST /tickets {\"title\": \"A\" * 100} (or any title whose trimmed length is exactly 100) previously returned 201 and now raises ValidationError(\"invalid_title\") and returns HTTP 400. The effective maximum drops from 100 to 99 characters, breaking the previous 'at most 100 characters after trimming' contract. The error message was also reworded to 'less than 100', so it silently documents the new, narrower rule.",
+      "evidence": "        if len(stripped) >= MAX_TITLE_LENGTH:\n            raise ValidationError(\n                \"invalid_title\",\n                f\"title must be less than {MAX_TITLE_LENGTH} characters after trimming\",\n            )",
+      "evidenceType": "source-analysis",
+      "recommendation": "Restore the original check `if len(stripped) > MAX_TITLE_LENGTH:` and the message `title must be at most {MAX_TITLE_LENGTH} characters after trimming`.",
+      "relatedFiles": [
+        "sample-project/app/main.py",
+        "sample-project/tests/test_tickets.py"
+      ],
+      "agents": [
+        "code-review"
+      ],
+      "blocking": true
+    },
+    {
+      "id": "CODE-002",
+      "key": "REGRESSION|sample-project/tests/test_tickets.py|TestCreateTicket|test_create_title_100_chars",
+      "severity": "MEDIUM",
+      "category": "REGRESSION",
+      "title": "Boundary test for 100-character titles deleted, hiding the off-by-one behaviour change",
+      "file": "sample-project/tests/test_tickets.py",
+      "line": null,
+      "symbol": "TestCreateTicket",
+      "description": "The diff removes test_create_title_100_chars, which asserted that POST /tickets with {\"title\": \"A\" * 100} returns 201. That test would fail against the new `>=` check in create_ticket, so deleting it masks the regression in CODE-001 instead of catching it. The remaining tests only cover 1 character and 101 characters, leaving the upper boundary (100 accepted) untested.",
+      "evidence": "    def test_create_title_one_char(self, client):\n        resp = client.post(\"/tickets\", json={\"title\": \"X\"})\n        assert resp.status_code == 201\n        assert resp.json()[\"title\"] == \"X\"\n\n    def test_create_title_101_chars_rejected(self, client):",
+      "evidenceType": "source-analysis",
+      "recommendation": "Restore test_create_title_100_chars (100-character title returns 201 with a 100-character title) so the maximum-length boundary stays covered.",
+      "relatedFiles": [
+        "sample-project/app/service.py"
+      ],
+      "agents": [
+        "code-review"
+      ],
+      "blocking": false
+    },
+    {
+      "id": "DOC-001",
+      "key": "DOC_MISMATCH|sample-project/docs/api.md|-|title_max_length",
+      "severity": "MEDIUM",
+      "category": "DOC_MISMATCH",
+      "title": "Docs say title may be up to 100 chars, but code now rejects titles of exactly 100 chars",
+      "file": "sample-project/docs/api.md",
+      "line": 40,
+      "symbol": null,
+      "description": "The change replaced `len(stripped) > MAX_TITLE_LENGTH` with `len(stripped) >= MAX_TITLE_LENGTH` (MAX_TITLE_LENGTH = 100), so POST /tickets now returns 400 invalid_title for a trimmed title of exactly 100 characters. The API contract still documents an inclusive 1-100 character range in four places (data model line 15, request rules line 40, error table line 59, validation summary line 202). A caller sending a 100-character title per the docs would get an unexpected 400. The stated intent is only a 'refactor', so the code change itself may be an unintended off-by-one rather than a deliberate rule change.",
+      "evidence": "Code: sample-project/app/service.py:38 `if len(stripped) >= MAX_TITLE_LENGTH:` (and :41 `f\"title must be less than {MAX_TITLE_LENGTH} characters after trimming\"`)  |  Doc: sample-project/docs/api.md:40 `| title | string | yes | 1\u2013100 chars after trimming; blank/missing \u2192 400 |`; also api.md:15 `1\u2013100 characters after trimming whitespace`, api.md:59 `longer than 100 chars after trimming`, api.md:202 `must be at most 100 characters`",
+      "evidenceType": "doc-comparison",
+      "recommendation": "Confirm the intended behaviour first; if the code is correct, update the docs accordingly (api.md lines 15, 40, 59 and 202 to state a maximum of 99 characters / 'at least 100 chars' as the rejection cause). If the intent was a pure refactor, restore `>` in service.py so the documented 1-100 range holds.",
+      "relatedFiles": [
+        "sample-project/app/service.py"
+      ],
+      "agents": [
+        "documentation"
+      ],
+      "blocking": true
+    },
+    {
+      "id": "TEST-001",
+      "key": "MISSING_TEST|sample-project/app/service.py|TicketService.create_ticket|boundary_title_max_length",
+      "severity": "MEDIUM",
+      "category": "MISSING_TEST",
+      "title": "No test asserts the outcome for a title of exactly MAX_TITLE_LENGTH (100) characters; the existing boundary test was deleted",
+      "file": "sample-project/app/service.py",
+      "line": 38,
+      "symbol": "TicketService.create_ticket",
+      "description": "The diff changes the upper-bound check from `>` to `>=`, which changes how a title of exactly 100 characters (after trimming) is handled. In the same diff, `test_create_title_100_chars` (which asserted a 201 for a 100-character title) was removed from tests/test_tickets.py. No remaining test exercises the exact boundary, so the behaviour at the limit is now unasserted. All 20 remaining tests pass, which is why the change is not detected by the suite.",
+      "evidence": "service.py diff hunk @@ -35,10 +35,10 @@:\n-        if len(stripped) > MAX_TITLE_LENGTH:\n+        if len(stripped) >= MAX_TITLE_LENGTH:\ntest_tickets.py diff hunk @@ -62,12 +62,6 @@:\n-    def test_create_title_100_chars(self, client):\n-        title = \"A\" * 100\n-        resp = client.post(\"/tickets\", json={\"title\": title})\n-        assert resp.status_code == 201\n-        assert len(resp.json()[\"title\"]) == 100\nMAX_TITLE_LENGTH = 100 (service.py:15). pytest.log: \"20 passed, 1 warning in 3.40s\".",
+      "evidenceType": "source-analysis",
+      "recommendation": "Restore a boundary test in tests/test_tickets.py, e.g. `test_create_title_100_chars`: `resp = client.post(\"/tickets\", json={\"title\": \"A\" * 100})`, then assert the documented contract for the maximum length - `assert resp.status_code == 201` and `assert len(resp.json()[\"title\"]) == 100` if 100 characters is meant to be allowed (as the pre-change test and the previous \"at most 100\" message state), or `assert resp.status_code == 400` and `assert resp.json()[\"error\"] == \"invalid_title\"` if the limit was intentionally tightened. Either way the boundary must be pinned by an assertion.",
+      "relatedFiles": [
+        "sample-project/tests/test_tickets.py"
+      ],
+      "agents": [
+        "testing"
+      ],
+      "blocking": true
+    },
+    {
+      "id": "TEST-002",
+      "key": "MISSING_TEST|sample-project/app/service.py|TicketService.create_ticket|message_title_too_long",
+      "severity": "MEDIUM",
+      "category": "MISSING_TEST",
+      "title": "Changed over-length error message is not asserted by any test",
+      "file": "sample-project/app/service.py",
+      "line": 41,
+      "symbol": "TicketService.create_ticket",
+      "description": "The diff changes the error message returned for an over-length title. The only over-length test, `test_create_title_101_chars_rejected`, asserts the status code and the `error` code but not the `message` field, so the changed message text is unasserted.",
+      "evidence": "service.py diff:\n-                f\"title must be at most {MAX_TITLE_LENGTH} characters after trimming\",\n+                f\"title must be less than {MAX_TITLE_LENGTH} characters after trimming\",\ntest_tickets.py:65-68:\n    def test_create_title_101_chars_rejected(self, client):\n        resp = client.post(\"/tickets\", json={\"title\": \"A\" * 101})\n        assert resp.status_code == 400\n        assert resp.json()[\"error\"] == \"invalid_title\"",
+      "evidenceType": "source-analysis",
+      "recommendation": "Extend `test_create_title_101_chars_rejected` (or add `test_create_title_too_long_message`): `resp = client.post(\"/tickets\", json={\"title\": \"A\" * 101})`; assert `resp.status_code == 400`, `resp.json()[\"error\"] == \"invalid_title\"`, and assert `resp.json()[\"message\"]` equals the documented message for the maximum title length.",
+      "relatedFiles": [
+        "sample-project/tests/test_tickets.py"
+      ],
+      "agents": [
+        "testing"
+      ],
+      "blocking": true
+    },
+    {
+      "id": "TEST-003",
+      "key": "MISSING_TEST|sample-project/app/service.py|TicketService.create_ticket|boundary_title_below_max",
+      "severity": "LOW",
+      "category": "MISSING_TEST",
+      "title": "No test asserts that a title one character below the limit (99) is accepted",
+      "file": "sample-project/app/service.py",
+      "line": 38,
+      "symbol": "TicketService.create_ticket",
+      "description": "Boundary testing around the changed comparison should pin both sides of the limit. The suite only tests 1 character (accepted) and 101 characters (rejected); nothing asserts the value just below MAX_TITLE_LENGTH.",
+      "evidence": "service.py:38 `if len(stripped) >= MAX_TITLE_LENGTH:`; test_tickets.py contains only `test_create_title_one_char` (\"X\") and `test_create_title_101_chars_rejected` (\"A\" * 101) as length tests.",
+      "evidenceType": "source-analysis",
+      "recommendation": "Add `test_create_title_99_chars`: `resp = client.post(\"/tickets\", json={\"title\": \"A\" * 99})`; assert `resp.status_code == 201` and `len(resp.json()[\"title\"]) == 99`.",
+      "relatedFiles": [
+        "sample-project/tests/test_tickets.py"
+      ],
+      "agents": [
+        "testing"
+      ],
+      "blocking": false
+    },
+    {
+      "id": "TEST-004",
+      "key": "MISSING_TEST|sample-project/app/service.py|TicketService.create_ticket|padded_title_at_max_length",
+      "severity": "LOW",
+      "category": "MISSING_TEST",
+      "title": "No test asserts that the length limit is applied after trimming at the boundary",
+      "file": "sample-project/app/service.py",
+      "line": 38,
+      "symbol": "TicketService.create_ticket",
+      "description": "The length check operates on the trimmed title (`stripped`), and the error message states the limit applies \"after trimming\". No test sends a title whose raw length exceeds the limit but whose trimmed length is at or below it, so the trim-then-measure ordering is unasserted.",
+      "evidence": "service.py:35 `stripped = title.strip()`; service.py:38 `if len(stripped) >= MAX_TITLE_LENGTH:`; test_tickets.py:85-88 `test_create_title_is_trimmed` uses only \"  Hello  \".",
+      "evidenceType": "source-analysis",
+      "recommendation": "Add `test_create_padded_title_at_limit`: `resp = client.post(\"/tickets\", json={\"title\": \"  \" + \"A\" * 99 + \"  \"})`; assert `resp.status_code == 201` and `resp.json()[\"title\"] == \"A\" * 99`, demonstrating that surrounding whitespace does not count toward the limit.",
+      "relatedFiles": [
+        "sample-project/tests/test_tickets.py"
+      ],
+      "agents": [
+        "testing"
+      ],
+      "blocking": false
+    }
+  ],
+  "counts": {
+    "total": 7,
+    "blocking": 4,
+    "byAgent": {
+      "code-review": 2,
+      "documentation": 1,
+      "testing": 4
+    }
+  },
+  "timeline": {
+    "wallClockMs": 90915,
+    "sumOfAgentMs": 163050,
+    "overlapObserved": true
+  },
+  "limitations": [
+    "sample-project/app/models.py (CreateTicketRequest) is imported by main.py but was not in changedFiles or relevantSource, so request-model-level validation was not inspected.",
+    "Documented API contract (sample-project/docs/api.md) was not in the permitted read list; the previous 100-character limit was inferred from the removed code, error message, and deleted test in diff.patch.",
+    "All existing tests passed, but passing tests do not prove that changed behaviours are asserted. See behaviour-map.md for gaps.",
+    "No coverage tool was run. Line coverage figures are not reported.",
+    "Analysis is limited to files listed in context.json. Files outside the scope path were not examined.",
+    "sample-project/app/models.py is imported by app/main.py but is not listed in context.json relevantSource, so request-model validation (e.g. explicit null titles) was not examined.",
+    "Only files under sample-project/ were analysed; api-surface.md (OpenAPI) does not reflect manual validation, so title length rules were checked against sample-project/app/service.py directly.",
+    "Only files under sample-project/ were analysed."
+  ]
+}

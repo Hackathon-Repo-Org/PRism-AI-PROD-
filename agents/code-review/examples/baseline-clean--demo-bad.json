@@ -1,0 +1,35 @@
+{
+  "findings": [
+    {
+      "id": "CODE-001",
+      "key": "NULL_HANDLING|sample-project/app/service.py|create_ticket|priority",
+      "severity": "HIGH",
+      "category": "NULL_HANDLING",
+      "title": "priority.upper() called before null/missing check — AttributeError on absent priority",
+      "file": "sample-project/app/service.py",
+      "line": 47,
+      "symbol": "create_ticket",
+      "description": "When a caller omits the priority field (or sends null), the parameter arrives as None. The call priority.upper() on line 47 raises AttributeError: 'NoneType' object has no attribute 'upper'. FastAPI catches this as an unhandled exception and returns HTTP 500. Concrete input: POST /tickets with body {\"title\": \"T\"} (no priority). Wrong result: 500 Internal Server Error instead of 400 invalid_priority.",
+      "evidence": "priority = priority.upper()",
+      "evidenceType": "source-analysis",
+      "recommendation": "Add a null check before normalising: if priority is None: raise ValidationError('invalid_priority', 'priority is required'). Only then call priority.strip().upper().",
+      "relatedFiles": ["sample-project/app/main.py"]
+    },
+    {
+      "id": "CODE-002",
+      "key": "INPUT_VALIDATION|sample-project/app/service.py|create_ticket|priority",
+      "severity": "HIGH",
+      "category": "INPUT_VALIDATION",
+      "title": "No allowed-value check on priority — any string is accepted and stored",
+      "file": "sample-project/app/service.py",
+      "line": 47,
+      "symbol": "create_ticket",
+      "description": "After calling .upper() on priority, the code stores the result without checking whether it is one of the allowed values (LOW, MEDIUM, HIGH). Any string is accepted. Concrete input: POST /tickets with {\"title\": \"T\", \"priority\": \"URGENT\"}. Wrong result: 201 Created, ticket stored with priority='URGENT'.",
+      "evidence": "priority = priority.upper()",
+      "evidenceType": "source-analysis",
+      "recommendation": "After normalising, check membership: if normalised not in ALLOWED_PRIORITIES: raise ValidationError('invalid_priority', 'priority must be one of LOW, MEDIUM, HIGH'). ALLOWED_PRIORITIES is already defined in the module.",
+      "relatedFiles": []
+    }
+  ],
+  "limitations": []
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-20260926-101500-a1b2c3d",
+  "snapshotId": "aabbccdd11223344556677889900aabbccdd1122",
+  "agent": "documentation",
+  "status": "error",
+  "statusReason": "Agent produced output that failed schema validation twice; result recorded as error.",
+  "startedAt": "2026-09-26T10:15:04.000Z",
+  "finishedAt": "2026-09-26T10:16:10.000Z",
+  "durationMs": 66000,
+  "findings": [],
+  "limitations": [],
+  "execution": null
+}

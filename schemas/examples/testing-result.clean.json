@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-20260926-101500-a1b2c3d",
+  "snapshotId": "aabbccdd11223344556677889900aabbccdd1122",
+  "agent": "testing",
+  "status": "completed",
+  "statusReason": null,
+  "startedAt": "2026-09-26T10:15:05.000Z",
+  "finishedAt": "2026-09-26T10:15:28.000Z",
+  "durationMs": 23000,
+  "findings": [],
+  "limitations": [
+    "Only the baseline test suite was executed; no new tests were generated."
+  ],
+  "execution": {
+    "command": "python -m pytest -q --junitxml=../../logs/junit.xml",
+    "workingDirectory": "runs/run-20260926-101500-a1b2c3d/snapshot/sample-project",
+    "exitCode": 0,
+    "logPath": "runs/run-20260926-101500-a1b2c3d/logs/pytest.log",
+    "junitPath": "runs/run-20260926-101500-a1b2c3d/logs/junit.xml",
+    "collected": 18,
+    "passed": 18,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "startedAt": "2026-09-26T10:15:07.000Z",
+    "finishedAt": "2026-09-26T10:15:25.000Z",
+    "durationMs": 18000
+  }
+}

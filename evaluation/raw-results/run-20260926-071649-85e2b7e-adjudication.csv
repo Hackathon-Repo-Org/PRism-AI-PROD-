@@ -1,0 +1,7 @@
+runId,rowType,findingId,findingKey,agent,category,severity,title,compatibleSeeds,verdict
+run-20260926-071649-85e2b7e,UNMATCHED,DOC-001,DOC_EXAMPLE_INVALID|sample-project/README.md|-|priority,documentation,DOC_EXAMPLE_INVALID,MEDIUM,README create-ticket curl example omits the now-required priority field,,
+run-20260926-071649-85e2b7e,UNMATCHED,TEST-001,MISSING_TEST|sample-project/app/service.py|TicketService.create_ticket|whitespace_priority,testing,MISSING_TEST,MEDIUM,No test asserts that surrounding whitespace in priority is trimmed,,
+run-20260926-071649-85e2b7e,UNMATCHED,TEST-002,MISSING_TEST|sample-project/app/models.py|TicketResponse|priority_in_retrieved_ticket,testing,MISSING_TEST,MEDIUM,No test asserts priority is returned when a ticket is retrieved or listed,,
+run-20260926-071649-85e2b7e,UNMATCHED,DOC-002,DOC_MISSING|sample-project/README.md|-|priority,documentation,DOC_MISSING,LOW,README ticket overview does not mention the new priority field,,
+run-20260926-071649-85e2b7e,UNMATCHED,DOC-003,DOC_MISSING|sample-project/docs/api.md|-|priority_validation_rules,documentation,DOC_MISSING,LOW,Validation rules summary table has no priority rules,,
+run-20260926-071649-85e2b7e,UNMATCHED,TEST-003,MISSING_TEST|sample-project/app/service.py|TicketService.create_ticket|empty_priority,testing,MISSING_TEST,LOW,No test for empty or whitespace-only priority,,

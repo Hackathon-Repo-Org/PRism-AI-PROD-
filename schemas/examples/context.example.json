@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-20260926-101500-a1b2c3d",
+  "snapshotId": "aabbccdd11223344556677889900aabbccdd1122",
+  "baseCommit":  "0011223344556677889900aabbccdd1122334455",
+  "baseRef": "baseline-clean",
+  "candidateRef": "demo-bad",
+  "intent": "Add priority field to ticket creation endpoint",
+  "scopePath": "sample-project",
+  "snapshotDir": "runs/run-20260926-101500-a1b2c3d/snapshot",
+  "diffPath": "runs/run-20260926-101500-a1b2c3d/diff.patch",
+  "project": {
+    "language": "Python",
+    "framework": "FastAPI",
+    "testCommand": "python -m pytest -q",
+    "testWorkingDirectory": "sample-project"
+  },
+  "changedFiles": [
+    {
+      "path": "sample-project/app/service.py",
+      "status": "M",
+      "additions": 12,
+      "deletions": 1,
+      "hunks": [
+        { "oldStart": 20, "oldLines": 1, "newStart": 20, "newLines": 14 }
+      ]
+    }
+  ],
+  "relevantSource": [
+    "sample-project/app/service.py",
+    "sample-project/app/main.py"
+  ],
+  "relevantTests": [
+    "sample-project/tests/test_tickets.py"
+  ],
+  "relevantDocs": [
+    "sample-project/docs/api.md",
+    "sample-project/README.md"
+  ],
+  "exclusions": [],
+  "scopeLimitations": [
+    "Only files under sample-project/ were analysed."
+  ],
+  "createdAt": "2026-09-26T10:15:00.000Z"
+}

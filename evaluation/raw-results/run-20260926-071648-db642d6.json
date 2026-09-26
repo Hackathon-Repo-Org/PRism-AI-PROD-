@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-20260926-071648-db642d6",
+  "ref": "demo-bad",
+  "scoredAt": "2026-09-26T07:20:03.948Z",
+  "seedsPresent": 5,
+  "seedsMatched": 5,
+  "overallRecall": 1.0,
+  "recallPerAgent": {
+    "code-review": {
+      "matched": 2,
+      "total": 2,
+      "recall": 1.0
+    },
+    "testing": {
+      "matched": 2,
+      "total": 2,
+      "recall": 1.0
+    },
+    "documentation": {
+      "matched": 1,
+      "total": 1,
+      "recall": 1.0
+    }
+  },
+  "seedHits": {
+    "SEED-01": "CODE-001",
+    "SEED-02": "CODE-002",
+    "SEED-03": "TEST-001",
+    "SEED-04": "TEST-003",
+    "SEED-05": "DOC-001"
+  },
+  "ambiguousSeeds": [
+    "SEED-03",
+    "SEED-05"
+  ],
+  "ambiguousFindings": [],
+  "latencyMs": 142765,
+  "agentStatuses": {
+    "code-review": "completed",
+    "testing": "completed",
+    "documentation": "completed"
+  },
+  "readinessState": "ATTENTION_REQUIRED",
+  "totalFindings": 15,
+  "unmatchedFindingCount": 10
+}

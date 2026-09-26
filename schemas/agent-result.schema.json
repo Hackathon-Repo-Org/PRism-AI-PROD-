@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prism-ai/schemas/agent-result.schema.json",
+  "title": "PRism-AI agent result",
+  "description": "Result written by orchestrator.agent_io after a specialist agent completes. Schema version 1.0.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "runId",
+    "snapshotId",
+    "agent",
+    "status",
+    "statusReason",
+    "startedAt",
+    "finishedAt",
+    "durationMs",
+    "findings",
+    "limitations",
+    "execution"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "runId":         { "type": "string", "pattern": "^run-\\d{8}-\\d{6}-[0-9a-f]{7}$" },
+    "snapshotId":    { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "agent":         { "type": "string", "enum": ["code-review", "testing", "documentation"] },
+    "status":        { "type": "string", "enum": ["completed", "error", "timeout", "skipped"] },
+    "statusReason":  { "type": ["string", "null"] },
+    "startedAt":     { "type": "string", "format": "date-time" },
+    "finishedAt":    { "type": "string", "format": "date-time" },
+    "durationMs":    { "type": "integer", "minimum": 0 },
+    "findings":      { "type": "array", "items": { "$ref": "#/$defs/finding" } },
+    "limitations":   { "type": "array", "items": { "type": "string" } },
+    "execution": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/testingExecution" }
+      ]
+    }
+  },
+
+  "if": { "properties": { "status": { "not": { "const": "completed" } } } },
+  "then": {
+    "properties": {
+      "statusReason": { "type": "string", "minLength": 1 }
+    }
+  },
+
+  "allOf": [
+    {
+      "if":   { "properties": { "agent": { "const": "code-review" } }, "required": ["agent"] },
+      "then": {
+        "properties": {
+          "findings": {
+            "items": {
+              "properties": {
+                "category": {
+                  "enum": [
+                    "NULL_HANDLING", "INPUT_VALIDATION", "LOGIC_ERROR",
+                    "ERROR_HANDLING", "REGRESSION", "SECURITY", "MAINTAINABILITY"
+                  ]
+                }
+              }
+            }
+          },
+          "execution": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if":   { "properties": { "agent": { "const": "testing" } }, "required": ["agent"] },
+      "then": {
+        "properties": {
+          "findings": {
+            "items": {
+              "properties": {
+                "category": {
+                  "enum": ["MISSING_TEST", "WEAK_TEST", "TEST_FAILURE"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if":   { "properties": { "agent": { "const": "documentation" } }, "required": ["agent"] },
+      "then": {
+        "properties": {
+          "findings": {
+            "items": {
+              "properties": {
+                "category": {
+                  "enum": ["DOC_MISMATCH", "DOC_MISSING", "DOC_EXAMPLE_INVALID"]
+                }
+              }
+            }
+          },
+          "execution": { "type": "null" }
+        }
+      }
+    }
+  ],
+
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "required": [
+        "id", "key", "severity", "category", "title", "file", "line",
+        "symbol", "description", "evidence", "evidenceType",
+        "recommendation", "relatedFiles"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(CODE|TEST|DOC)-\\d{3}$"
+        },
+        "key": {
+          "type": "string",
+          "pattern": "^[A-Z_]+\\|[^|]+\\|[^|]+\\|[^|]+$",
+          "description": "<CATEGORY>|<file>|<symbol or ->|<subject>"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "NULL_HANDLING", "INPUT_VALIDATION", "LOGIC_ERROR",
+            "ERROR_HANDLING", "REGRESSION", "SECURITY", "MAINTAINABILITY",
+            "MISSING_TEST", "WEAK_TEST", "TEST_FAILURE",
+            "DOC_MISMATCH", "DOC_MISSING", "DOC_EXAMPLE_INVALID"
+          ]
+        },
+        "title":          { "type": "string" },
+        "file":           { "type": "string" },
+        "line":           { "type": ["integer", "null"], "minimum": 1 },
+        "symbol":         { "type": ["string", "null"] },
+        "description":    { "type": "string" },
+        "evidence":       { "type": "string" },
+        "evidenceType": {
+          "type": "string",
+          "enum": ["source-analysis", "tool-output", "test-execution", "doc-comparison"]
+        },
+        "recommendation": { "type": "string" },
+        "relatedFiles":   { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "testingExecution": {
+      "type": "object",
+      "required": [
+        "command", "workingDirectory", "exitCode", "logPath", "junitPath",
+        "collected", "passed", "failed", "skipped", "errors",
+        "startedAt", "finishedAt", "durationMs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "command":          { "type": "string" },
+        "workingDirectory": { "type": "string" },
+        "exitCode":         { "type": ["integer", "null"] },
+        "logPath":          { "type": "string" },
+        "junitPath":        { "type": "string" },
+        "collected":        { "type": ["integer", "null"], "minimum": 0 },
+        "passed":           { "type": ["integer", "null"], "minimum": 0 },
+        "failed":           { "type": ["integer", "null"], "minimum": 0 },
+        "skipped":          { "type": ["integer", "null"], "minimum": 0 },
+        "errors":           { "type": ["integer", "null"], "minimum": 0 },
+        "startedAt":        { "type": "string", "format": "date-time" },
+        "finishedAt":       { "type": "string", "format": "date-time" },
+        "durationMs":       { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "findings": [
+    {
+      "id": "TEST-001",
+      "key": "TEST_FAILURE|sample-project/tests/test_tickets.py|test_create_ticket_null_priority|-",
+      "severity": "HIGH",
+      "category": "TEST_FAILURE",
+      "title": "test_create_ticket_null_priority fails after priority field change",
+      "file": "sample-project/tests/test_tickets.py",
+      "line": 42,
+      "symbol": "test_create_ticket_null_priority",
+      "description": "The test asserts priority is null but the changed code now accepts an integer value. The assertion fails with AssertionError: assert 1 == None.",
+      "evidence": "FAILED tests/test_tickets.py::test_create_ticket_null_priority - AssertionError: assert 1 == None",
+      "evidenceType": "test-execution",
+      "recommendation": "Update the test to assert the new expected value, or revert the change in service.py if null was intentional.",
+      "relatedFiles": ["sample-project/app/service.py"]
+    },
+    {
+      "id": "TEST-002",
+      "key": "MISSING_TEST|sample-project/app/service.py|create_ticket|null_priority",
+      "severity": "MEDIUM",
+      "category": "MISSING_TEST",
+      "title": "No test asserts behaviour when priority is supplied as null",
+      "file": "sample-project/app/service.py",
+      "line": null,
+      "symbol": "create_ticket",
+      "description": "The diff introduces a priority field. No test sends priority=null explicitly and asserts it is accepted and echoed back.",
+      "evidence": "+    priority: Optional[int] = None",
+      "evidenceType": "source-analysis",
+      "recommendation": "Add test_create_ticket_null_priority: POST /tickets with {\"title\": \"T\", \"priority\": null}, assert 201 and body[\"priority\"] is None.",
+      "relatedFiles": ["sample-project/tests/test_tickets.py"]
+    }
+  ],
+  "limitations": [
+    "All existing tests passed, but passing tests do not prove that changed behaviours are asserted. See behaviour-map.md for gaps.",
+    "No coverage tool was run. Line coverage figures are not reported.",
+    "Analysis is limited to files listed in context.json. Files outside the scope path were not examined."
+  ]
+}

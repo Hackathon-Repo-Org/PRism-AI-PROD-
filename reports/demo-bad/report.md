@@ -1,0 +1,241 @@
+# ⚠️  ATTENTION REQUIRED
+
+- **Blocking findings:** CODE-001, CODE-002, DOC-001, DOC-002, DOC-003, TEST-001, TEST-002, TEST-003
+
+## Run identity
+
+| Field | Value |
+|---|---|
+| Run ID | `run-20260926-071648-db642d6` |
+| Base | `baseline-clean` (`76aedbfa2efa`) |
+| Candidate | `demo-bad` (`db642d6de5a3`) |
+| Generated | 2026-09-26T07:20:02.000Z |
+| Policy | v1.0 |
+
+## Agents
+
+| Agent | Status | Start | End | Duration |
+|---|---|---|---|---|
+| code-review | ✅ completed | 07:17:39Z | 07:18:30Z | 51s |
+| testing | ✅ completed | 07:17:43Z | 07:19:51Z | 2m 7s |
+| documentation | ✅ completed | 07:17:40Z | 07:18:52Z | 1m 11s |
+
+Wall clock: **2m 12s** (overlapping)  · Sum of agent time: 4m 10s
+
+```
+code-review     |===============                         |
+testing         | =======================================|
+documentation   |======================                  |
+```
+
+## Test execution
+
+**Command:** `python -m pytest -q --junitxml=../../logs/junit.xml`  
+**Exit code:** `0`  
+**Results:** collected 22 · passed 22 · failed 0 · skipped 0 · errors 0
+**Log:** `runs/run-20260926-071648-db642d6/logs/pytest.log`
+
+## Blocking findings
+
+### code-review
+
+**[HIGH] CODE-001 — priority.upper() called on None when priority is omitted, causing HTTP 500**  
+`sample-project/app/service.py:45`  
+
+CreateTicketRequest.priority is Optional[str] with default None, and the route passes body.priority straight to TicketService.create_ticket. create_ticket calls priority.upper() with no null check. Concrete input: POST /tickets with body {"title": "Fix the bug"} (no priority field) raises AttributeError: 'NoneType' object has no attribute 'upper', which is not a ValidationError, so it escapes the handler and returns HTTP 500 instead of 201 (or a documented 400). This is also a regression: before the diff the same request succeeded with 201. The test suite was edited to add "priority": "LOW" to every create request, so the regression is not caught.
+
+```
+        priority = priority.upper()
+```
+
+> **Recommendation:** Handle None before normalising: either default it (e.g. `priority = (priority or "MEDIUM").upper()`) or raise ValidationError("invalid_priority", ...) when priority is None, and add a test for a create request without priority.
+
+**[HIGH] CODE-002 — priority is never checked against ALLOWED_PRIORITIES, so any string is accepted**  
+`sample-project/app/service.py:45`  
+
+The intent restricts priority to LOW, MEDIUM, HIGH and the diff defines ALLOWED_PRIORITIES, but the constant is never used. create_ticket only upper-cases the value and stores it. Concrete input: POST /tickets with {"title": "X", "priority": "urgent"} returns 201 with "priority": "URGENT" instead of a 400 validation error. Likewise {"priority": ""} is stored as an empty string.
+
+```
+        priority = priority.upper()
+```
+
+> **Recommendation:** After upper-casing, raise ValidationError("invalid_priority", f"priority must be one of {', '.join(sorted(ALLOWED_PRIORITIES))}") when priority not in ALLOWED_PRIORITIES, and add a test for an invalid priority returning 400.
+
+### documentation
+
+**[MEDIUM] DOC-001 — POST /tickets request table does not document the new `priority` field**  
+`sample-project/docs/api.md:41`  
+
+The change adds a `priority` request field to POST /tickets (intent: LOW, MEDIUM, HIGH), but the request body table lists only `title` and `description`. Callers have no documentation of the field's type, whether it is required, its allowed values, or that input is upper-cased (the new test sends "high" and expects "HIGH").
+
+```
+Code: sample-project/app/models.py:13 `priority: Optional[str] = None`; sample-project/app/service.py:45 `priority = priority.upper()`  |  Doc: sample-project/docs/api.md:41 `| `description` | string | no | Any string; omit or `null` for none |` (last row; no `priority` row)
+```
+
+> **Recommendation:** Confirm the intended behaviour first (required vs optional, allowed values LOW/MEDIUM/HIGH, case-insensitive input); if the code is correct, add a `priority` row to the POST /tickets request table stating type, required-ness, allowed values, and case normalisation.
+
+**[MEDIUM] DOC-002 — Ticket data model does not document the new `priority` response field**  
+`sample-project/docs/api.md:17`  
+
+Every ticket response (POST /tickets, GET /tickets, GET /tickets/{id}, PATCH /tickets/{id}/status) now includes a required `priority` string, but the Ticket data model table omits it. Callers parsing responses will not know the field exists or what values it can hold.
+
+```
+Code: sample-project/app/models.py:25 `priority: str` (TicketResponse)  |  Doc: sample-project/docs/api.md:17 `| `status` | string | One of `OPEN`, `IN_PROGRESS`, `CLOSED` |` (no `priority` row between lines 14-18)
+```
+
+> **Recommendation:** Add a `priority` row to the Ticket data model table (type string, one of `LOW`, `MEDIUM`, `HIGH`, stored upper-case).
+
+**[MEDIUM] DOC-003 — Validation rules summary and error table have no priority rule**  
+`sample-project/docs/api.md:203`  
+
+The change introduces `ALLOWED_PRIORITIES = {"LOW", "MEDIUM", "HIGH"}` and case normalisation, but the Validation rules summary lists only title and status rules, and the POST /tickets error table has no entry for an invalid or missing priority. Note the code never checks `priority` against ALLOWED_PRIORITIES and raises no documented error code, so the actual behaviour for invalid or missing values does not match the stated intent.
+
+```
+Code: sample-project/app/service.py:15 `ALLOWED_PRIORITIES = {"LOW", "MEDIUM", "HIGH"}` and service.py:45 `priority = priority.upper()` (no membership check)  |  Doc: sample-project/docs/api.md:203 `| Status allowed values | `OPEN`, `IN_PROGRESS`, `CLOSED` — exact case, no other values accepted |` (no priority rule); api.md:59 error table lists only `invalid_title`
+```
+
+> **Recommendation:** Confirm the intended behaviour first (which values are accepted, what error code an invalid or missing priority returns); if the code is correct, add a `Priority allowed values` row to the validation summary and the corresponding error row to the POST /tickets error table.
+
+### testing
+
+**[MEDIUM] TEST-001 — No test for creating a ticket without a priority**  
+`sample-project/app/service.py:45`  
+
+The diff makes `priority` an Optional request field defaulting to None, then unconditionally calls `priority.upper()` in create_ticket. Every existing test that creates a ticket now sends a priority, so the omitted-priority path is never exercised and no test asserts its status code or body.
+
+```
+models.py L13: `priority: Optional[str] = None`; service.py L45: `priority = priority.upper()`; all POST /tickets calls in tests/test_tickets.py were changed to include `"priority": "LOW"` or `"priority": "high"`.
+```
+
+> **Recommendation:** Add `test_create_without_priority` in tests/test_tickets.py: `resp = client.post("/tickets", json={"title": "No priority"})`; assert the documented outcome: either `resp.status_code == 400` with `resp.json()["error"]` equal to the priority validation error code, or `resp.status_code == 201` with the documented default priority in `resp.json()["priority"]`. It must not be a 500.
+
+**[MEDIUM] TEST-002 — No test for creating a ticket with an explicit null priority**  
+`sample-project/app/service.py:45`  
+
+An explicit JSON null for `priority` reaches create_ticket as None and is passed to `priority.upper()`. No test sends `"priority": null` or asserts the resulting response.
+
+```
+models.py L13: `priority: Optional[str] = None`; service.py L45: `priority = priority.upper()`; no test in tests/test_tickets.py sends `"priority": None`.
+```
+
+> **Recommendation:** Add `test_create_null_priority` in tests/test_tickets.py: `resp = client.post("/tickets", json={"title": "T", "priority": None})`; assert `resp.status_code == 400` and `resp.json()["error"]` equals the priority validation error code with a `message` present (or the documented default if null is allowed). It must not be a 500.
+
+**[MEDIUM] TEST-003 — No test that an unsupported priority value is rejected**  
+`sample-project/app/service.py:15`  
+
+The diff introduces `ALLOWED_PRIORITIES = {"LOW", "MEDIUM", "HIGH"}` matching the intent, but no test posts a value outside this set and asserts rejection. The only priority-specific test covers a valid lowercase value.
+
+```
+service.py L15: `ALLOWED_PRIORITIES = {"LOW", "MEDIUM", "HIGH"}`; service.py L45: `priority = priority.upper()` followed directly by building the ticket dict; tests only send "LOW" or "high".
+```
+
+> **Recommendation:** Add `test_create_unsupported_priority_rejected` in tests/test_tickets.py: `resp = client.post("/tickets", json={"title": "T", "priority": "URGENT"})`; assert `resp.status_code == 400` and `resp.json()["error"]` equals the priority validation error code (e.g. `invalid_priority`) with a `message` field.
+
+## Non-blocking findings
+
+### documentation
+
+**[MEDIUM] DOC-004 — POST /tickets curl example omits `priority` and would fail against current code**  
+`sample-project/docs/api.md:66`  
+
+The documented example sends only `title` and `description`. With `priority` omitted, the request model sets it to None and the service calls `priority.upper()`, raising AttributeError, so the example produces a 500 error instead of the documented 201. This is likely a code defect relative to the intent rather than a doc error.
+
+```
+Code: sample-project/app/models.py:13 `priority: Optional[str] = None`; sample-project/app/service.py:45 `priority = priority.upper()`  |  Doc: sample-project/docs/api.md:66 `-d '{"title": "Fix login bug", "description": "Users cannot log in after password reset"}'`
+```
+
+> **Recommendation:** Confirm the intended behaviour first; if priority is meant to be optional, fix the code to handle a missing value (e.g. a default) and keep the example; if it is meant to be required, add `"priority": "LOW"` to the example and document the error for a missing value.
+
+**[MEDIUM] DOC-005 — README smoke-test create example omits `priority` and would fail against current code**  
+`sample-project/README.md:80`  
+
+The README quick smoke test creates a ticket with only a title. Because `priority` defaults to None and the service calls `.upper()` on it unconditionally, this request returns a 500 error, and the subsequent GET/PATCH smoke-test commands then act on a ticket that was never created.
+
+```
+Code: sample-project/app/service.py:45 `priority = priority.upper()`  |  Doc: sample-project/README.md:80 `-d '{"title": "Fix login bug"}' | python -m json.tool`
+```
+
+> **Recommendation:** Confirm the intended behaviour first; if priority is required, add `"priority": "LOW"` to the README create example; if it is optional, fix the code so a missing priority does not crash.
+
+**[LOW] DOC-006 — Ticket JSON response examples do not include the `priority` field**  
+`sample-project/docs/api.md:50`  
+
+The response examples for POST /tickets, GET /tickets, GET /tickets/{id} and PATCH /tickets/{id}/status show only id, title, description, status and createdAt. Actual responses always include `priority`, so the examples no longer match what callers receive.
+
+```
+Code: sample-project/app/models.py:25 `priority: str`; sample-project/app/service.py:53 `"priority": priority,`  |  Doc: sample-project/docs/api.md:50 `"status": "OPEN",` followed by `"createdAt"` with no `priority` key (same at lines 91, 130, 174)
+```
+
+> **Recommendation:** Add a `"priority"` key (e.g. `"priority": "LOW"`) to every ticket JSON response example in docs/api.md.
+
+**[LOW] DOC-007 — README ticket overview does not mention priority**  
+`sample-project/README.md:9`  
+
+The README overview lists the ticket attributes (title, description, status, creation timestamp) but not the new priority attribute.
+
+```
+Code: sample-project/app/models.py:25 `priority: str`  |  Doc: sample-project/README.md:9 `A REST API for managing support tickets. Tickets have a title, an optional description, a status`
+```
+
+> **Recommendation:** Mention the priority attribute (`LOW`, `MEDIUM`, `HIGH`) in the README overview sentence.
+
+### testing
+
+**[LOW] TEST-004 — No test for an empty-string priority**  
+`sample-project/app/service.py:45`  
+
+An empty string priority upper-cases to "" and would be stored as the ticket priority. No test covers this edge case.
+
+```
+service.py L45: `priority = priority.upper()`; service.py L53: `"priority": priority,`; no test sends `"priority": ""`.
+```
+
+> **Recommendation:** Add `test_create_empty_priority_rejected` in tests/test_tickets.py: `resp = client.post("/tickets", json={"title": "T", "priority": ""})`; assert `resp.status_code == 400` and `resp.json()["error"]` equals the priority validation error code.
+
+**[LOW] TEST-005 — Allowed priority values LOW and MEDIUM are never asserted in responses**  
+`sample-project/app/service.py:53`  
+
+Many tests send `"priority": "LOW"` but none assert the returned priority; MEDIUM is never sent. Only HIGH (via lowercase normalisation) is asserted.
+
+```
+tests/test_tickets.py L45-53 test_create_happy_path sends `"priority": "LOW"` but asserts only id, title, description, status, createdAt; L96-99 test_create_with_priority_is_normalised asserts `resp.json()["priority"] == "HIGH"`.
+```
+
+> **Recommendation:** Add a parametrized `test_create_each_allowed_priority` over LOW, MEDIUM, HIGH in tests/test_tickets.py: `resp = client.post("/tickets", json={"title": "T", "priority": p})`; assert `resp.status_code == 201` and `resp.json()["priority"] == p`.
+
+**[LOW] TEST-006 — GET endpoints never assert the new priority field**  
+`sample-project/app/main.py:42`  
+
+`TicketResponse` now requires `priority: str`, so GET /tickets and GET /tickets/{id} return priority, but the read tests only assert title/status.
+
+```
+models.py L25: `priority: str`; tests/test_tickets.py L146-150 test_get_existing asserts only `resp.json()["title"] == "Retrieve me"`; L118-124 test_list_returns_all asserts only titles.
+```
+
+> **Recommendation:** Add `test_get_existing_includes_priority` in tests/test_tickets.py: create with `client.post("/tickets", json={"title": "T", "priority": "MEDIUM"})`, then `resp = client.get("/tickets/1")`; assert `resp.status_code == 200` and `resp.json()["priority"] == "MEDIUM"`.
+
+## Limitations and scope
+
+- Analysis is static source review only; no tests or requests were executed.
+- sample-project/app/__init__.py is empty in the snapshot.
+- All existing tests passed, but passing tests do not prove that changed behaviours are asserted. See behaviour-map.md for gaps.
+- No coverage tool was run. Line coverage figures are not reported.
+- Analysis is limited to files listed in context.json. Files outside the scope path were not examined.
+- Outcomes for the untested priority scenarios were inferred from source analysis only; none of these requests were executed.
+- The code never validates `priority` against ALLOWED_PRIORITIES and crashes on a missing value, so the intended contract (required-ness, error code for invalid values) could not be confirmed from code; findings flag the doc gaps and defer to the intent.
+- Only files under sample-project/ were analysed.
+
+## Next steps
+
+- **CODE-001:** Handle None before normalising: either default it (e.g. `priority = (priority or "MEDIUM").upper()`) or raise ValidationError("invalid_priority", ...) when priority is None, and add a test for a create request without priority.
+- **CODE-002:** After upper-casing, raise ValidationError("invalid_priority", f"priority must be one of {', '.join(sorted(ALLOWED_PRIORITIES))}") when priority not in ALLOWED_PRIORITIES, and add a test for an invalid priority returning 400.
+- **DOC-001:** Confirm the intended behaviour first (required vs optional, allowed values LOW/MEDIUM/HIGH, case-insensitive input); if the code is correct, add a `priority` row to the POST /tickets request table stating type, required-ness, allowed values, and case normalisation.
+- **DOC-002:** Add a `priority` row to the Ticket data model table (type string, one of `LOW`, `MEDIUM`, `HIGH`, stored upper-case).
+- **DOC-003:** Confirm the intended behaviour first (which values are accepted, what error code an invalid or missing priority returns); if the code is correct, add a `Priority allowed values` row to the validation summary and the corresponding error row to the POST /tickets error table.
+- **TEST-001:** Add `test_create_without_priority` in tests/test_tickets.py: `resp = client.post("/tickets", json={"title": "No priority"})`; assert the documented outcome: either `resp.status_code == 400` with `resp.json()["error"]` equal to the priority validation error code, or `resp.status_code == 201` with the documented default priority in `resp.json()["priority"]`. It must not be a 500.
+- **TEST-002:** Add `test_create_null_priority` in tests/test_tickets.py: `resp = client.post("/tickets", json={"title": "T", "priority": None})`; assert `resp.status_code == 400` and `resp.json()["error"]` equals the priority validation error code with a `message` present (or the documented default if null is allowed). It must not be a 500.
+- **TEST-003:** Add `test_create_unsupported_priority_rejected` in tests/test_tickets.py: `resp = client.post("/tickets", json={"title": "T", "priority": "URGENT"})`; assert `resp.status_code == 400` and `resp.json()["error"]` equals the priority validation error code (e.g. `invalid_priority`) with a `message` field.
+
+---
+
+_This is a scoped pre-review check, not approval to merge._
