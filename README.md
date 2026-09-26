@@ -385,11 +385,12 @@ PRism-AI/
 ├── sample-project/       # demo FastAPI app that gets reviewed
 ├── evaluation/           # answer key, scorer, measured results
 ├── reports/              # curated example reports
+├── bob_sessions/         # IBM Bob session logs and evidence
 └── docs/
     ├── architecture.md
     ├── demo-script.md
     ├── bob-capability-log.md
-    └── project-history/  # team notes and session logs from development
+    └── project-history/  # team plans and handoff notes
 ```
 
 `runs/`, `.prism.env`, virtual environments and caches are git-ignored.
@@ -465,4 +466,5 @@ CI (`.github/workflows/ci.yml`) runs `python prism.py test` and `pip-audit` on e
 | `docs/demo-script.md` | 5-minute demo walkthrough |
 | `orchestrator/ORCHESTRATOR.md` | Running the pipeline from IBM Bob |
 | `evaluation/results.md` | Measured accuracy on planted problems |
-| `docs/project-history/` | Team plans, handoffs and session logs |
+| `bob_sessions/` | IBM Bob session logs and evidence |
+| `docs/project-history/` | Team plans and handoff notes |

@@ -302,7 +302,7 @@ permanent and report it as `status: "error"` — never silently drop or invent f
 was not precisely true. This rerun corrects the description to what was actually observed.*
 
 **What we tried:** Inspect the Bob UI and available tools to determine what session/usage
-information is accessible and how to capture `project-history/bob_sessions/` evidence.
+information is accessible and how to capture `bob_sessions/` evidence.
 
 **Exact steps:**
 1. Scanned the available tool list in the current session for session/usage/token-count APIs.
@@ -325,7 +325,7 @@ information is accessible and how to capture `project-history/bob_sessions/` evi
 - No tool named `session_info`, `get_usage`, or similar was found in the available tool list.
 - No API for token counts, session IDs, or timestamps on individual tool calls.
 
-**Decision:** `project-history/bob_sessions/member1/` evidence = screenshots of key tool-call blocks (taken by
+**Decision:** `bob_sessions/member1/` evidence = screenshots of key tool-call blocks (taken by
 the human member) + a `LOG.md` entry per meaningful task. The absence of a timestamp on each
 tool call means we rely on file artifact timestamps (`createdAt` fields in JSON) for ordering
 evidence, not on UI-displayed per-call times.
