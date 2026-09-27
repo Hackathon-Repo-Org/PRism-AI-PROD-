@@ -49,9 +49,53 @@ provider via `python prism.py setup`. The answer key for the demo is in
 
 ---
 
+## Use it on your own project: `prismai`
+
+Install the `prismai` command **once** (from the PRism-AI folder — note the dot at the end):
+
+```powershell
+pip install -e .
+```
+
+Then open a **new** terminal, go to **any project folder** and type `prismai` — like `claude`
+or `git`, it works on the folder you are in:
+
+```
+PS C:\Users\you\projects\my-shop-app> $env:DEEPSEEK_API_KEY = "sk-..."
+PS C:\Users\you\projects\my-shop-app> prismai
+
+PRism-AI - Hi! I'm your pre-review code checker.
+  Project  my-shop-app  ·  117 files  ·  726 KB of code
+  Memory   117 file summaries remembered  ·  last check: just now
+  AI       DeepSeek · deepseek-chat
+  Try: "analyse this project and give me a report" | "which parts of the code are the riskiest?"
+
+ you › analyse this project and give me a report
+   ... mapping the project files
+   ... running full review and tests
+ (findings table, top recommendations, then a plain-English summary — see Sample run below)
+
+ you › explain the bug in shopmart/orders/shipping.py and show me the fix
+ you › /exit
+```
+
+| Type | To |
+|---|---|
+| `prismai` | Chat about the folder you are in |
+| `prismai C:\other-project` | Chat about another folder |
+| `prismai check --scan .` | One full check of this folder, no chat; writes `PRISM-REPORT.md` here |
+| `prismai watch .` | Re-check automatically every time you save |
+| `prismai doctor` | Check the setup |
+
+`prismai` not found? Open a new terminal after installing, or use the launcher that needs no
+install: `C:\path\to\PRism-AI-PROD-\prismai.cmd` (macOS/Linux: `./prismai`).
+`python prism.py chat <folder>` always works too.
+
+---
+
 ## Contents
 
-1. [Overview](#overview) · 2. [Key features](#key-features) · 3. [Architecture](#architecture) ·
+0. [Use it on your own project: `prismai`](#use-it-on-your-own-project-prismai) · 1. [Overview](#overview) · 2. [Key features](#key-features) · 3. [Architecture](#architecture) ·
 4. [Sample run](#sample-run) · 5. [How to use it](#how-to-use-it) · 6. [Results](#results-and-exit-codes) ·
 7. [Configuration](#configuration) · 8. [Large projects & memory](#large-projects-and-memory) ·
 9. [Testing](#testing) · 10. [Project structure](#project-structure) · 11. [Security](#security-and-privacy) ·
@@ -235,7 +279,8 @@ is in [`docs/sample-run.md`](docs/sample-run.md).
 ### Chat — `prismai`
 
 ```powershell
-python prism.py chat C:\my-project     # or, from inside the project folder: prismai
+prismai                                # inside the project folder (see "Use it on your own project")
+python prism.py chat C:\my-project     # same thing, without installing prismai
 ```
 
 Ask anything, or use a command:

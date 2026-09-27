@@ -625,7 +625,7 @@ def cmd_check(args: argparse.Namespace) -> int:
               "commit is checked. Commit first to include them.\n")
 
     if args.scan:
-        what = f"scan of {args.scan}"
+        what = f"scan of {pathlib.Path(args.scan).expanduser().resolve().name or args.scan}"
     elif args.before:
         what = f"{args.after} vs {args.before}"
     elif args.patch:
