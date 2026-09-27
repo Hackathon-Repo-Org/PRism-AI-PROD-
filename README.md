@@ -454,6 +454,7 @@ PRism-AI-PROD-/
 | A project's tests "could not be started" | Install that project's dependencies, or pass `--test-command` |
 | `ref 'main' does not exist` | Commit checks need a git clone; use `--scan` for plain folders |
 | Boxes or odd symbols instead of emoji | Use Windows Terminal or VS Code, or set `PRISM_PLAIN=1` |
+| `Filename too long` (Windows) | Clone into a shorter folder, e.g. `C:\PRism-AI`; Windows limits paths to 260 characters |
 
 ---
 

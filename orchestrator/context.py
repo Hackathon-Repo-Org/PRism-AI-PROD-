@@ -67,7 +67,7 @@ def _is_safe_excluded(name: str, size: int) -> tuple[bool, str | None]:
 
 def _git(*args: str, cwd: pathlib.Path | None = None) -> str:
     """Run a git command, return stdout. Raises SystemExit on failure."""
-    cmd = ["git"] + list(args)
+    cmd = ["git", "-c", "core.longpaths=true"] + list(args)  # Windows paths > 260 chars
     result = subprocess.run(
         cmd,
         cwd=str(cwd or _REPO),
