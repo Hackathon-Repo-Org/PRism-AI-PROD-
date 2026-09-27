@@ -15,3 +15,15 @@ Thumbs.db
 
 # PRism-AI AI settings (contains an API key)
 .prism.env
+
+# pip install -e . metadata
+*.egg-info/
+build/
+
+# PRism-AI memory and reports written into checked projects
+.prism/
+PRISM-REPORT.md
+
+# Demo project made by tools/make_demo_project.py
+demo-large-project/
+demo-large-project-ANSWERS.md

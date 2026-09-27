@@ -23,6 +23,7 @@ import time
 from datetime import datetime, timezone
 import os
 import re
+import shutil
 from pathlib import Path, PurePosixPath
 from typing import Any, Dict, Optional
 import xml.etree.ElementTree as ET
@@ -136,11 +137,17 @@ def run(run_id: str, timeout: int = 300, runs_root: Path = Path("runs")) -> Dict
         os.path.relpath(junit_path.resolve(), work_dir.resolve())
     ).as_posix()
 
-    base_args = test_cmd.split()
-    cmd = base_args + [f"--junitxml={junit_rel}"]
+    # pytest: add --junitxml so the counts come from JUnit XML. Any other command
+    # (npm test, make test, ...) runs exactly as written; its counts stay unknown.
+    is_pytest = "pytest" in test_cmd
+    if is_pytest:
+        cmd: Any = test_cmd.split() + [f"--junitxml={junit_rel}"]
+        command_str = " ".join(cmd)
+    else:
+        cmd = test_cmd
+        command_str = test_cmd
 
     # Repo-relative forward-slash paths for the execution record
-    command_str      = " ".join(cmd)
     working_dir_str  = _to_fwd(work_dir,  repo_root)
     log_path_str     = _to_fwd(log_path,  repo_root)
     junit_path_str   = _to_fwd(junit_path, repo_root)
@@ -152,8 +159,14 @@ def run(run_id: str, timeout: int = 300, runs_root: Path = Path("runs")) -> Dict
     could_not_start = False
 
     try:
+        # With shell=True a missing program would look like a test failure, so
+        # check it exists first: "could not start" must stay distinct from "failed".
+        program = test_cmd.split()[0] if test_cmd.split() else ""
+        if not is_pytest and not shutil.which(program):
+            raise FileNotFoundError(f"{program!r} is not installed or not on PATH")
         result = subprocess.run(
             cmd,
+            shell=not is_pytest,
             cwd=work_dir,
             capture_output=True,
             text=True,

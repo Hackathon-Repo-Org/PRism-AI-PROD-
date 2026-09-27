@@ -1,5 +1,7 @@
 # PRism-AI — 5-minute demo script
 
+> **Note:** this is the team's original demo script. It uses git tags (`demo-bad`, `baseline-clean`, …) from the original repository, which are **not included in this repository**, so those commands will fail here. Use the demos in the README instead (*Judges: quick start* and *Catch a bad change*).
+
 All numbers below come from real runs on 2026-09-26 (see `evaluation/results.md` and the
 reports in `reports/`). If anything is re-run live, quote the new numbers instead.
 

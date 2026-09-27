@@ -1,0 +1,30 @@
+# Lets you install the `prismai` command:   pip install -e .
+# (-e keeps PRism-AI running from this folder, where its agents/, config/ and schemas/ live.)
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prism-ai"
+version = "1.0.0"
+description = "Pre-review readiness checker: three AI specialists and a rule-based verdict."
+readme = "README.md"
+requires-python = ">=3.11"
+# Same pins as requirements.txt (the versions the team tested with).
+dependencies = [
+    "jsonschema==4.26.0",
+    "pytest==9.1.1",
+    "fastapi==0.141.1",
+    "starlette==1.7.0",
+    "httpx==0.28.1",
+    "uvicorn[standard]==0.54.0",
+    "anthropic==0.120.0",
+    "rich==14.3.1",
+]
+
+[project.scripts]
+prismai = "prism:prismai_main"
+
+[tool.setuptools]
+py-modules = ["prism"]
+packages = ["orchestrator"]

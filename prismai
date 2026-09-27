@@ -1,0 +1,6 @@
+#!/bin/sh
+# PRism-AI launcher for macOS/Linux: works without "pip install -e .".
+# Run ./prismai from this folder, or add this folder to PATH to use it anywhere.
+# Set PYTHON=/path/to/python to choose the interpreter.
+PY="${PYTHON:-$(command -v python3 || command -v python)}"
+PRISM_ENTRY=prismai exec "$PY" "$(cd "$(dirname "$0")" && pwd)/prism.py" "$@"

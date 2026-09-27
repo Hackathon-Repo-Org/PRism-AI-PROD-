@@ -256,8 +256,9 @@ def aggregate(
             reasons.append({"code": "TESTS_NOT_RUN",
                              "detail": "exitCode is null — tests could not be started"})
         elif exit_code != 0:
+            runner = "pytest" if "pytest" in (execution.get("command") or "") else "test command"
             reasons.append({"code": "TESTS_FAILED",
-                             "detail": f"pytest exited {exit_code}"})
+                             "detail": f"{runner} exited {exit_code}"})
 
     # --- collect all valid findings ---
     all_findings: list[dict] = []

@@ -177,26 +177,37 @@ _HUNK_HEADER = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 _NAME_STATUS = re.compile(r"^([AMDRC]\d*)\t(.+?)(?:\t(.+))?$")
 
 
+def _header_path(line: str) -> str | None:
+    """Path from 'diff --git a/P b/P' (both sides equal unless it is a rename)."""
+    rest = line[len("diff --git a/"):]
+    half = (len(rest) - 3) // 2
+    path = rest[:half]
+    return path if rest[half:] == f" b/{path}" else None
+
+
 def _parse_diff(patch: str) -> list[_ChangedFile]:
     """Parse a unified diff into ChangedFile records."""
     files: dict[str, _ChangedFile] = {}
     current: _ChangedFile | None = None
     # pending status for the next +++ line (set by header markers)
     _pending_status: str = "M"
+    header_path: str | None = None
 
     for line in patch.splitlines():
-        # diff --git a/... b/...
+        # diff --git a/<path> b/<path>
         if line.startswith("diff --git "):
             current = None
             _pending_status = "M"
+            header_path = _header_path(line)
             continue
 
-        # header markers — set pending status BEFORE the +++ line
-        if line.startswith("new file"):
-            _pending_status = "A"
-            continue
-        if line.startswith("deleted file"):
-            _pending_status = "D"
+        # header markers — set pending status BEFORE the +++ line.
+        # Empty files have no ---/+++ lines, so record them from the header.
+        if line.startswith("new file") or line.startswith("deleted file"):
+            _pending_status = "A" if line.startswith("new file") else "D"
+            if header_path:
+                current = files.setdefault(header_path,
+                                           _ChangedFile(path=header_path, status=_pending_status))
             continue
         if line.startswith("rename to "):
             path = line[len("rename to "):]
@@ -254,7 +265,9 @@ def _parse_diff(patch: str) -> list[_ChangedFile]:
 
 
 def _get_diff(base_sha: str, candidate_sha: str, scope_path: str, cwd: pathlib.Path) -> str:
-    return _git("diff", base_sha, candidate_sha, "--", scope_path, cwd=cwd)
+    # quotepath=false: keep non-ASCII file names readable instead of octal-escaped
+    return _git("-c", "core.quotepath=false", "diff", base_sha, candidate_sha, "--",
+                scope_path, cwd=cwd)
 
 
 # ---------------------------------------------------------------------------
@@ -409,6 +422,7 @@ def build_context(
     intent: str | None = None,
     repo_dir: pathlib.Path | None = None,
     runs_dir: pathlib.Path | None = None,
+    project: dict | None = None,
 ) -> tuple[str, pathlib.Path]:
     """
     Build a run context.
@@ -431,7 +445,8 @@ def build_context(
     candidate_sha = _resolve_sha(candidate_ref, cwd=cwd)
 
     # load project config
-    project_cfg = json.loads((_CONFIG_DIR / "project.json").read_text(encoding="utf-8"))
+    # project overrides config/project.json (used for code outside this repo)
+    project_cfg = project or json.loads((_CONFIG_DIR / "project.json").read_text(encoding="utf-8"))
     scope_path = project_cfg["scopePath"]
 
     # 2. Create run directory

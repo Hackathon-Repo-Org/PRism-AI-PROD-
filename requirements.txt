@@ -6,3 +6,4 @@ starlette==1.7.0
 httpx==0.28.1
 uvicorn[standard]==0.54.0
 anthropic==0.120.0
+rich==14.3.1

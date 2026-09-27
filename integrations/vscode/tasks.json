@@ -1,0 +1,32 @@
+{
+  // PRism-AI tasks for VS Code.
+  // 1. Copy this file to <your project>/.vscode/tasks.json
+  // 2. Set the PRISM_HOME environment variable to the folder that contains prism.py,
+  //    and your AI key (e.g. DEEPSEEK_API_KEY), then restart VS Code.
+  // 3. Ctrl+Shift+P -> "Tasks: Run Task" -> pick a PRism task.
+  // The report is written to PRISM-REPORT.md in your project.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "PRism: scan whole project",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "${env:PRISM_HOME}/prism.py", "check",
+        "--scan", "${workspaceFolder}",
+        "--out", "${workspaceFolder}/PRISM-REPORT.md"
+      ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+    },
+    {
+      "label": "PRism: auto-check on save (watch)",
+      "type": "shell",
+      "command": "python",
+      "args": ["${env:PRISM_HOME}/prism.py", "watch", "${workspaceFolder}"],
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    }
+  ]
+}
