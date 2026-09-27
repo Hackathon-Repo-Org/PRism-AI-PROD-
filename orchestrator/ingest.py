@@ -35,7 +35,8 @@ _SKIP = {".git", ".hg", ".svn", "node_modules", ".venv", "venv", "env", "__pycac
          ".prism"}      # PRism-AI's own memory (summaries, project map)
 
 _GIT_ID = ["-c", "user.name=PRism-AI", "-c", "user.email=prism@localhost",
-           "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false"]
+           "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false",
+           "-c", "core.longpaths=true"]
 
 
 class IngestError(Exception):
@@ -87,12 +88,14 @@ def _folder(path: str, what: str) -> pathlib.Path:
 
 
 def _workspace(runs: pathlib.Path, fill_base, fill_candidate, message: str) -> pathlib.Path:
-    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    # Short name: Windows paths are limited to 260 characters by default.
+    stamp = datetime.datetime.now().strftime("%m%d%H%M%S") + os.urandom(2).hex()
     ws = runs / "workspaces" / f"ws-{stamp}"
     code = ws / SCOPE
     code.mkdir(parents=True)
     try:
-        _git("init", "-q", cwd=ws)
+        # --template= : no sample hook files (long paths, and nothing to run)
+        _git("init", "-q", "--template=", cwd=ws)
         fill_base(code)
         _git("add", "-A", cwd=ws)
         _git("commit", "-q", "--allow-empty", "-m", "base", cwd=ws)
