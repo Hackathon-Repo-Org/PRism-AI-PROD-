@@ -362,3 +362,40 @@ def test_answer_with_raw_line_breaks_inside_the_json_is_understood(project, ai):
     replies.append('{"answer": "## Report\n\n| # | Issue |\n|---|---|\n| 1 | SQL injection |"}')
     answer = _session(project).ask("report please")
     assert answer.startswith("## Report") and '{"answer"' not in answer
+
+
+# A real DeepSeek reply: {"answer": ...} with UNESCAPED """ inside a code block, which makes
+# the JSON invalid. It must still be shown as a clean answer, never as raw JSON.
+BROKEN_REAL_REPLY = r'''{"answer": "## The bug\n\nshopmart/orders/shipping.py:5-7:\n\n```python\n5| def shipping_label(name: str, address: Optional[str] = None) -> str:\n6|     """Printable label. Address is optional for in-store pickup."""\n7|     return f\"{name}\n{address.upper()}\"\n```\n\nWhen you call shipping_label(\"Bob\"), address is None.\n\n## The fix\n\n```python\n    return f\"{name}\n{address.upper() if address else ''}\"\n```"}'''
+
+
+def test_real_broken_json_answer_is_shown_cleanly(project, ai):
+    replies, _ = ai
+    replies.append(BROKEN_REAL_REPLY)
+    answer = _session(project).ask("explain the shipping bug")
+    assert answer.startswith("## The bug")
+    assert '{"answer"' not in answer
+    assert '"""Printable label. Address is optional for in-store pickup."""' in answer
+    assert 'return f"{name}\n{address.upper()}"' in answer      # the code's own \n is kept
+    assert 'shipping_label("Bob")' in answer                      # \" became "
+    assert "\n## The fix\n" in answer                              # \n became a real line break
+
+
+def test_plain_markdown_answer_with_quotes_and_json_code_is_kept_as_is(project, ai):
+    replies, _ = ai
+    text = ('## Fix\n```python\ndef f():\n    """Doc."""\n    return {"findings": []}\n```\n'
+            'Use `"quotes"` freely.')
+    replies.append(text)
+    assert _session(project).ask("q") == text
+
+
+def test_tool_call_after_a_short_sentence_is_still_a_tool_call(project, ai):
+    replies, seen = ai
+    replies += ['Let me look at that file. {"tool": "read_file", "args": {"path": "shop/pricing.py"}}',
+                "It starts the discount at 11."]
+    assert _session(project).ask("where?") == "It starts the discount at 11."
+    assert "TOOL RESULT (read_file)" in seen[-1][-1]["content"]
+
+
+def test_system_prompt_asks_for_plain_markdown_answers():
+    assert "plain Markdown" in chat_mod.SYSTEM and "NOT JSON" in chat_mod.SYSTEM

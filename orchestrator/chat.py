@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import time
 
 from orchestrator import codemap, ingest
@@ -44,8 +45,8 @@ Tools (all read-only):
                                          PRISM-REPORT.md. Slow (seconds to minutes). The ONLY
                                          source of the official verdict.
   show_findings()                        findings from the last run_check
-When you have enough information, reply with ONLY:
-  {"answer": "<your reply to the user, in Markdown>"}
+When you have enough information, reply with your answer as plain Markdown text — NOT JSON,
+no {"answer": ...} wrapper. Code blocks with any quotes are fine in a plain answer.
 
 Rules:
 - Read code before making claims about it. Cite locations as path:line.
@@ -376,17 +377,43 @@ class ChatSession:
         return 0
 
 
+_ANSWER_START = re.compile(r'^\s*(?:```(?:json)?\s*)?\{\s*"answer"\s*:\s*"', re.S)
+
+
 def _parse_action(reply: str) -> dict:
+    """A tool call {"tool": ...}, an answer, or {} (then the reply itself is the answer)."""
     from prism import _extract_json
-    try:
-        data = json.loads(_extract_json(reply), strict=False)  # raw newlines happen
-    except ValueError:
+    stripped = reply.strip()
+    if stripped.startswith("{") or stripped.startswith("```"):
+        try:
+            data = json.loads(_extract_json(reply), strict=False)  # raw newlines happen
+        except ValueError:
+            data = None
+        if isinstance(data, dict) and isinstance(data.get("answer"), str):
+            return {"answer": data["answer"]}
+        if isinstance(data, dict) and isinstance(data.get("tool"), str):
+            return data
+        if data is None and _ANSWER_START.match(reply):
+            return {"answer": _salvage_answer(reply)}
         return {}
-    if isinstance(data, dict) and isinstance(data.get("answer"), str):
-        return {"answer": data["answer"]}
-    if isinstance(data, dict) and isinstance(data.get("tool"), str):
-        return data
+    # Usually a plain-Markdown answer; but "Let me check. {"tool": ...}" is still a tool call.
+    if len(stripped) < 600 and '"tool"' in stripped:
+        try:
+            data = json.loads(_extract_json(reply), strict=False)
+        except ValueError:
+            return {}
+        if isinstance(data, dict) and isinstance(data.get("tool"), str):
+            return data
     return {}
+
+
+def _salvage_answer(reply: str) -> str:
+    """Text of a broken {"answer": "..."} reply (e.g. unescaped quotes inside code)."""
+    body = _ANSWER_START.sub("", reply, count=1)
+    body = re.sub(r'"\s*\}\s*(?:```)?\s*$', "", body.rstrip())
+    escapes = {"n": "\n", "t": "\t", '"': '"', "\\": "\\", "/": "/"}
+    body = re.sub(r'\\(["\\/nt])', lambda m: escapes[m.group(1)], body)  # one pass
+    return body.strip()
 
 
 def _default_say(name: str, args) -> str:
