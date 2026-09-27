@@ -108,19 +108,34 @@ PRism-AI is a **Python command-line tool**. It has no web server, database, logi
 ports. `sample-project/` is a small FastAPI app that exists only to be reviewed in demos.
 
 ```mermaid
-flowchart LR
-    U[Developer / judge] -->|prismai chat or prism.py check| I[Input<br/>commit · folder · patch]
-    I --> S[Snapshot + context<br/>orchestrator/context.py]
-    S --> P{Too big for<br/>one AI call?}
-    P -- no --> R
-    P -- yes --> M[Code map + AI summaries<br/>codemap.py · memory.py]
-    M --> R[3 specialists in parallel]
-    R --> CR[Code review AI]
-    R --> TE[Testing AI<br/>+ real pytest run]
-    R --> DO[Documentation AI<br/>+ API extraction]
-    CR & TE & DO --> V[Schema validation<br/>agent_io.py]
-    V --> D[Rule-based verdict<br/>aggregate.py + policy.json]
-    D --> O[Findings table + PRISM-REPORT.md]
+flowchart TD
+    user["Developer or judge"]
+    input["Input: git commit, folder or patch"]
+    snap["Snapshot and context (context.py)"]
+    size{"Too big for one AI call?"}
+    map["Code map and AI summaries (codemap.py, memory.py)"]
+    spec["3 specialists in parallel"]
+    cr["Code review AI"]
+    te["Testing AI and real pytest run"]
+    docs["Documentation AI and API extraction"]
+    val["Schema validation (agent_io.py)"]
+    verdict["Rule-based verdict (aggregate.py, policy.json)"]
+    out["Findings table and PRISM-REPORT.md"]
+
+    user -->|"chat or check"| input
+    input --> snap
+    snap --> size
+    size -->|"no"| spec
+    size -->|"yes"| map
+    map --> spec
+    spec --> cr
+    spec --> te
+    spec --> docs
+    cr --> val
+    te --> val
+    docs --> val
+    val --> verdict
+    verdict --> out
 ```
 
 **Where the AI is used — and where it is not:**
@@ -477,12 +492,6 @@ PRism-AI-PROD-/
 The team used IBM Bob during development. `bob_sessions/` holds the session evidence (logs
 and screenshots), and `docs/bob-capability-log.md` records what Bob could and could not do.
 
-The pipeline was also designed to run *inside* Bob, with Bob's own subagents as the three
-specialists instead of an API key: ask Bob to *"follow `orchestrator/ORCHESTRATOR.md` with base
-`<base>` and candidate `<candidate>`"*. This path is documented in `ORCHESTRATOR.md` but was not
-re-tested for this release; the commands above (`prism.py` with an API key) are the verified way
-to run PRism-AI.
-
 ---
 
 ## Further documentation
@@ -492,6 +501,5 @@ to run PRism-AI.
 | [`docs/sample-run.md`](docs/sample-run.md) | A commit check step by step, with every intermediate file |
 | [`docs/architecture.md`](docs/architecture.md) | Component diagram and safety rules |
 | [`docs/demo-script.md`](docs/demo-script.md) | The team's original demo script (uses git tags that are not included here) |
-| [`orchestrator/ORCHESTRATOR.md`](orchestrator/ORCHESTRATOR.md) | Running the pipeline from IBM Bob |
 | [`evaluation/results.md`](evaluation/results.md) | The team's measured results on planted problems (original tagged fixtures) |
 | [`docs/project-history/`](docs/project-history/) | Team plans and hand-over notes |
