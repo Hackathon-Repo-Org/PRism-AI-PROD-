@@ -379,7 +379,7 @@ class ChatSession:
 def _parse_action(reply: str) -> dict:
     from prism import _extract_json
     try:
-        data = json.loads(_extract_json(reply))
+        data = json.loads(_extract_json(reply), strict=False)  # raw newlines happen
     except ValueError:
         return {}
     if isinstance(data, dict) and isinstance(data.get("answer"), str):

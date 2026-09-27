@@ -354,3 +354,11 @@ def test_fancy_results_table_renders(capsys):
     results.print_result(report, "r.md", fancy=True, scope="project")
     out = capsys.readouterr().out
     assert "SQL injection" in out and "What to do first" in out
+
+
+def test_answer_with_raw_line_breaks_inside_the_json_is_understood(project, ai):
+    """DeepSeek sometimes writes real newlines inside the JSON string (invalid strict JSON)."""
+    replies, _ = ai
+    replies.append('{"answer": "## Report\n\n| # | Issue |\n|---|---|\n| 1 | SQL injection |"}')
+    answer = _session(project).ask("report please")
+    assert answer.startswith("## Report") and '{"answer"' not in answer

@@ -455,7 +455,7 @@ def summarise_files(provider: "Provider", snap: pathlib.Path, files: list[str], 
         parsed = {}
         try:
             reply = call_model(provider, SUMMARY_SYSTEM, [{"role": "user", "content": message}])
-            for item in json.loads(_extract_json(reply)).get("files", []):
+            for item in json.loads(_extract_json(reply), strict=False).get("files", []):
                 if isinstance(item, dict) and item.get("path"):
                     risk = item.get("risk")
                     parsed[str(item["path"]).strip()] = {
@@ -489,7 +489,7 @@ def _extract_json(text: str) -> str:
     """Pull the JSON object out of a reply that may carry fences, prose or <think> blocks."""
     if "</think>" in text:  # reasoning models on some providers inline their thinking
         text = text.rsplit("</think>", 1)[1]
-    decoder = json.JSONDecoder()
+    decoder = json.JSONDecoder(strict=False)  # allow raw newlines inside strings
     start = text.find("{")
     while start != -1:  # first complete object; ignores prose or extra objects after it
         try:
@@ -516,7 +516,7 @@ def run_specialist(agent: str, run_id: str, provider: Provider,
     def submit(reply: str):
         raw = _extract_json(reply)
         try:
-            data = json.loads(raw)
+            data = json.loads(raw, strict=False)
             if agent == "testing" and isinstance(data, dict) and "behaviourMap" in data:
                 (rdir / "testing-behaviour-map.md").write_text(
                     str(data.pop("behaviourMap")), encoding="utf-8")

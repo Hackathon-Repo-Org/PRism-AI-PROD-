@@ -302,3 +302,8 @@ def test_setup_does_not_save_when_connection_fails(clean_env, monkeypatch):
     monkeypatch.setattr(prism.getpass, "getpass", lambda _prompt: "k")
     assert prism.main(["setup"]) == 3
     assert not clean_env.exists()
+
+
+def test_findings_json_with_raw_newlines_in_strings_is_accepted():
+    raw = '{"findings": [], "limitations": ["line one\nline two"]}'
+    assert json.loads(prism._extract_json(raw), strict=False)["limitations"] == ["line one\nline two"]
