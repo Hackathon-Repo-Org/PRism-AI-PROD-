@@ -1,7 +1,7 @@
 # Lets you install the `prismai` command:   pip install -e .
 # (-e keeps PRism-AI running from this folder, where its agents/, config/ and schemas/ live.)
 [build-system]
-requires = ["setuptools>=64"]
+requires = ["setuptools>=77"]  # 77+: SPDX license field
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,6 +10,8 @@ version = "1.0.0"
 description = "Pre-review readiness checker: three AI specialists and a rule-based verdict."
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 # Same pins as requirements.txt (the versions the team tested with).
 dependencies = [
     "jsonschema==4.26.0",

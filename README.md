@@ -45,6 +45,7 @@ What to do first
 15. [Known limitations](#known-limitations)
 16. [Built with IBM Bob](#built-with-ibm-bob)
 17. [Further documentation](#further-documentation)
+18. [License](#license)
 
 ---
 
@@ -563,3 +564,9 @@ screenshots), and `docs/bob-capability-log.md` records what Bob could and could 
 | [`docs/demo-script.md`](docs/demo-script.md) | The team's original demo script (uses git tags that are not included here) |
 | [`evaluation/results.md`](evaluation/results.md) | The team's measured results on planted problems (original tagged fixtures) |
 | [`docs/project-history/`](docs/project-history/) | Team plans and hand-over notes |
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE) — Copyright (c) 2026 Player 4 Not Found.
